@@ -1,10 +1,9 @@
 
 
 import java.awt.Color;
+import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -28,8 +27,9 @@ public class MenuActionListener implements ActionListener{
   private JButton botao = new JButton();                                        // JButton para dar ordem de envio de mensagem ao servidor remoto
   private JLabel led_servidor = new JLabel();                                   // JLabel que vai servir para identificar visualmente se a aplicação está em modo servidor
   private JLabel led_cliente = new JLabel();                                    // JLabel que vai servir para identificar visualmente se a aplicação está em modo cliente
-  private JTextArea clientes_conectados = new JTextArea();                                        // JTextArea para mostrar utilizadores conectados
+  private List clientes_conectados = new List();                                // java.awt.List para mostrar utilizadores conectados
   private JScrollPane scrollPane_c = new JScrollPane(clientes_conectados);      // JScrollPane para colocar a JTextArea clientes_conectados
+  private JLabel clientes_con = new JLabel();                                   // JLabel com legenda "Clientes conectados"
   
   private JTextField tempField;                                                 // variavel que é usada na janela temporaria de configuração
   private JFrameCustom tempFrame;                                               // variavel que é usada na janela temporaria de configuração
@@ -63,6 +63,13 @@ public class MenuActionListener implements ActionListener{
       led_servidor.setBackground(Color.green);                                  // activa o led indicativo como servidor
   } 
   
+  public void addClientesToList(String clientes){                                // insere valores (neste caso ips de clientes) na List
+      clientes_conectados.add(clientes);
+      
+  }
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+  
   
  public MenuActionListener(){
  
@@ -89,67 +96,71 @@ public class MenuActionListener implements ActionListener{
     
     //configuração da JLabel porto_label_s
     porto_label_s.setText("A receber no porto:");                               // coloca a legenda na JLabel juntamente com o porto
-    porto_label_s.setBounds(380, 10, 200, 15);                                  // tamanho e localização da JLabel
+    porto_label_s.setBounds(395, 10, 200, 15);                                  // tamanho e localização da JLabel
     
     //configuração da JTextArea info
-    scrollPane.setBounds(20, 40, 400, 180);                                     // configura a posição e tamanho da JTextArea
+    scrollPane.setBounds(20, 60, 390, 180);                                     // configura a posição e tamanho da JTextArea
     scrollPane.setBorder(border);                                               // define o contorno da JTextArea
     info.setEditable(false);                                                    // desablita a edição do componente uma vez que é só de informação
     
-    //configuração da JTextArea clientes_conectados
-    scrollPane_c.setBounds(430, 40, 140, 180);                                   // configura a posição e tamanho da JTextArea
+    //configuração da List clientes_conectados
+    scrollPane_c.setBounds(420, 60, 150, 180);                                  // configura a posição e tamanho da JTextArea
     scrollPane_c.setBorder(border);                                             // define o contorno da JTextArea
-    clientes_conectados.setEditable(false);                                     // desablita a edição do componente uma vez que é só de informação
+    
+    //configuração da JLabel clientes_con
+    clientes_con.setText("Clientes conectados:");                               // coloca a legenda na JLabel juntamente com o porto
+    clientes_con.setBounds(420, 40, 150, 15);                                  // tamanho e localização da JLabel
     
     //configuração da JLabel aEnviar
     aEnviar.setText("Texto a enviar para:");                                    // coloca a legenda na JLabel aEnviar
-    aEnviar.setBounds(10, 240, 150, 15);                                        // configura a posição e tamanho da JLabel aEnviar
+    aEnviar.setBounds(10, 260, 150, 15);                                        // configura a posição e tamanho da JLabel aEnviar
     
     //configuração do JTextField nome_servidor
-    nome_servidor.setBounds(160, 240, 200, 20);                                 // configura a posição e tamanho do JTextField
+    nome_servidor.setBounds(160, 260, 250, 20);                                 // configura a posição e tamanho do JTextField
    
 
       
     //configuração da JLabel porto_label_c
     porto_label_c.setText("Porto:");                                            // coloca a legenda na JLabel porto_label_c
-    porto_label_c.setBounds(450, 240, 50, 15);                                  // configura a posição e tamanho da JLabel porto_label_c
+    porto_label_c.setBounds(450, 260, 50, 15);                                  // configura a posição e tamanho da JLabel porto_label_c
     
     //configuração do JTextField porto_servidor
-    porto_servidor.setBounds(500, 240, 70, 20);                                 // configura a posição e tamanho do JTextField
+    porto_servidor.setBounds(500, 260, 70, 20);                                 // configura a posição e tamanho do JTextField
     
     //configuração do JTextArea mensagem
-    mensagem.setBounds(20, 280, 400, 140);                                      // configuração da posição e tamanho da JTextArea mensagem
+    mensagem.setBounds(20, 300, 390, 150);                                      // configuração da posição e tamanho da JTextArea mensagem
     mensagem.setBorder(border);                                                 // define a border da JtextArea mensagem
     mensagem.setLineWrap(true);                                                 // define a JTextArea como Wrappable
     mensagem.setWrapStyleWord(true);                                            // configura a JTextArea para fazer wrap ao texto se este for demasiado longo
     
     //configuração do JButton botao
-    botao.setBounds(430, 280, 140, 140);                                        // configuração do tamanho e posição do JButton botao
+    botao.setBounds(420, 300, 150, 150);                                        // configuração do tamanho e posição do JButton botao
     botao.setText("Enviar !");                                                  // define o texto do JButton botao
     botao.addActionListener(this);                                              // adiciona um action listener a este botao
     botao.setActionCommand("botao_enviar");                                     // adiciona um string de comando associado a este botao   
     
     //Configuração da JLabel led_servidor
     led_servidor.setText("");
-    led_servidor.setBounds(5, 40, 10, 10);                                       // configura a posição e tamanho da Jlabel led_servidor                                   
+    led_servidor.setBounds(5, 60, 10, 10);                                       // configura a posição e tamanho da Jlabel led_servidor                                   
     led_servidor.setOpaque(true);
     led_servidor.setBorder(border);
     led_servidor.setBackground(Color.GRAY);
     
     //Configuração da JLabel led_cliente
     led_cliente.setText("");
-    led_cliente.setBounds(5, 280, 10, 10);                                      // configura a posição e tamanho da Jlabel led_servidor                                   
+    led_cliente.setBounds(5, 300, 10, 10);                                      // configura a posição e tamanho da Jlabel led_servidor                                   
     led_cliente.setOpaque(true);
     led_cliente.setBorder(border);
     led_cliente.setBackground(Color.GRAY);
     
     //configuração do Jpanel painel
-    painel.setSize(600, 500);                                                   // configura o tamanho do JPanel
-    painel.setBounds(0, 0, 600, 500);                                           // define a posição e tamanho do JPanel
+    painel.setSize(600, 520);                                                   // configura o tamanho do JPanel
+    painel.setBounds(0, 0, 600, 520);                                           // define a posição e tamanho do JPanel
     painel.add(hostName);                                                       // adiciona a JLabel hostname ao JPanel
     painel.add(porto_label_s);                                                  // adiciona a JLabel porto ao JPanel
     painel.add(scrollPane);                                                     // adiciona a JScrollPane com a JTextArea info ao JPanel
     painel.add(scrollPane_c);                                                   // adiciona a JScrollPane com a JTextArea clientes_conectados ao JPanel
+    painel.add(clientes_con);                                                   // adiciona a JLabel clientes_con ao JPanel
     painel.add(aEnviar);                                                        // adiciona a Jlabel aEnviar ao JPanel
     painel.add(nome_servidor);                                                  // adiciona o JTextField ao JPanel
     painel.add(porto_label_c);                                                  // adiciona a JTextLabel porto_label_c ao JPanel

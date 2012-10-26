@@ -75,19 +75,23 @@ public class SocketServidor implements Runnable{
       setIsServidor(true);                                                      // Se o socket aceitou uma conexão entao é servidor
       
            actionListener.appendInfo("Socket activo criado no porto: "+socket.getPort());    //Envia para a JTextAreaInfo a informação do Porto do socket activo gerado
-           actionListener.appendInfo("Utilizador com o endereço "+socket.getInetAddress().toString()+" conectado...");                // Envia info para a JTexArea info
-    
+           actionListener.appendInfo("Utilizador com o endereço "+socket.getInetAddress().toString().replace("/", "") +" conectado...");                // Envia info para a JTexArea info
+           actionListener.addClientesToList(socket.getInetAddress().toString().replace("/", ""));     // adiciona o ip do cliente conectado á java.awt.List
+           
       Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString());// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente
          Thread trd = new Thread(con_c);                                        // cria uma nova Thread para a instancia de conexao
          trd.start();                                                           // inicia a thread
          vetor_conexoes.add(con_c);                                             // Adiciona a conexao ao arrayListe de conexoes  
          actionListener.setConexaoAtiva(con_c);                                 // Envia a referencia de memória da conexão ativa para o actionListener
       
+         
+         
+      socket_servidor.close();                                                  // termina o servidor de escuta
+         
       }catch(IOException e){                                                
           System.out.println("IO error Server"+ e);
            e.printStackTrace();
                            }
-     
       
       }
     }

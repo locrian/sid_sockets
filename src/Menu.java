@@ -30,7 +30,7 @@ public class Menu extends JFrame{
     }
     
     // Inicialização da Thread para o Socket servidor
-    servidor = new SocketServidor(actionListener, portoNovo);
+    servidor = new SocketServidor(actionListener, portoNovo);                   // Cria um novo SocketServidor e envia a referência do MenuActionListener, o novo porto
     trd_s = new Thread(servidor);
     trd_s.start();
     actionListener.setSocketServidor(servidor);                                 // Envia para o actionListener a referencia do socketServidor
@@ -60,7 +60,7 @@ public class Menu extends JFrame{
     //configuração do JFrame Menu
     setLayout(null);
     setTitle("Sockets SID");                                                    // especifica o titulo do JFrame
-    setSize(600, 500);                                                          // especifica o tamanho da JFrame
+    setSize(600, 520);                                                          // especifica o tamanho da JFrame
     setResizable(false);                                                        // impede que se possa fazer resize ao JFrame
     setLocation(100,100);                                                       // especifica a ocalização de inicialização do JFrame
     setVisible(true);                                                           // activa a visibilidade do JFrame
