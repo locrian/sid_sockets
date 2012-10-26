@@ -78,7 +78,7 @@ public class SocketServidor implements Runnable{
            actionListener.appendInfo("Utilizador com o endereço "+socket.getInetAddress().toString().replace("/", "") +" conectado...");                // Envia info para a JTexArea info
            actionListener.addClientesToList(socket.getInetAddress().toString().replace("/", ""));     // adiciona o ip do cliente conectado á java.awt.List
            
-      Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString());// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente
+      Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString().replace("/", ""));// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente
          Thread trd = new Thread(con_c);                                        // cria uma nova Thread para a instancia de conexao
          trd.start();                                                           // inicia a thread
          vetor_conexoes.add(con_c);                                             // Adiciona a conexao ao arrayListe de conexoes  

@@ -3,6 +3,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 /*
@@ -16,7 +17,7 @@ import java.net.SocketTimeoutException;
  */
 public class Conexao implements Runnable{
     
-    private Socket server;                                                      // variavel que vai receber a referência da instanccia do active Socket
+    private Socket socket_activo;                                                      // variavel que vai receber a referência da instanccia do active Socket
     private String recebido;                                                    // Variavel que vai guardar as mensagens recebidas do inputStream
     private MenuActionListener actionListener = new MenuActionListener();       // variavel que vai receber a referencia do MenuActionListener
     private boolean stop = false;                                               // variavel booleana que define um criterio de paragem do ciclo while
@@ -35,7 +36,7 @@ public class Conexao implements Runnable{
     
     
     Conexao(Socket server, MenuActionListener actionListener, String client_ip){ // construtor que recebe tres parametos, a instância do socket activo e a instancia do MenuActionListener, e informação do ip do cliente conectado
-      this.server = server;
+      this.socket_activo = server;
       this.actionListener = actionListener;
       this.client_ip = client_ip;
     }
@@ -47,17 +48,22 @@ public class Conexao implements Runnable{
       
       try {
         
-        DataInputStream in = new DataInputStream (server.getInputStream());     // Cria um canal para receber dados.
-        DataOutputStream out = new DataOutputStream(server.getOutputStream());  // Cria um canal para enviar
+        DataInputStream in = new DataInputStream (socket_activo.getInputStream());     // Cria um canal para receber dados.
+        DataOutputStream out = new DataOutputStream(socket_activo.getOutputStream());  // Cria um canal para enviar
 
         
         //while((line = in.readUTF()) != null && !line.equals(".")) {
         while(!stop){
             
             try{   
-                recebido = in.readUTF();
+                recebido = in.readUTF();                                        // a variavel "recebido", recebe informação do input buffer
             }catch(SocketTimeoutException sto){
                 System.out.println("S Timeout do inputstream do servidor");
+            }
+            catch(SocketException se){                                          // caso o cliente feche a conexão ao disparar a excepção:
+                actionListener.appendInfo("Cliente "+client_ip+" terminou a sessão");  // envia informação para a janela info
+                actionListener.removeClientesFromList(client_ip);               // retira o ip do cliente da lista de clientes conectados
+                stop = true;                                                    // termina o ciclo de escuta de ccomunicações
             }
 
             if (recebido != null){                                              // Se recebeu informação no imputstream
@@ -82,7 +88,7 @@ public class Conexao implements Runnable{
       System.out.println("S Fim de ciclo");
         }
         
-        server.close();
+        socket_activo.close();                                                         // fecha o socket activo
       } catch (IOException ioe) {
         System.out.println("IOException on socket listen: " + ioe);
         ioe.printStackTrace();

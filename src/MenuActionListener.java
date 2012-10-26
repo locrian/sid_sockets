@@ -67,6 +67,15 @@ public class MenuActionListener implements ActionListener{
       clientes_conectados.add(clientes);
       
   }
+  
+  public void removeClientesFromList(String clientes){
+      
+    for (int i = 0; i< clientes_conectados.getItemCount(); i++){
+      if (clientes.compareTo(clientes_conectados.getItem(i).toString()) ==0)
+              clientes_conectados.remove(i);
+          ;
+    }
+  }
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
   
