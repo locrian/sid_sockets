@@ -17,12 +17,18 @@ import java.net.SocketTimeoutException;
  */
 public class Conexao implements Runnable{
     
-    private Socket socket_activo;                                                      // variavel que vai receber a referência da instanccia do active Socket
+    private Socket socket_activo;                                               // variavel que vai receber a referência da instanccia do active Socket
     private String recebido;                                                    // Variavel que vai guardar as mensagens recebidas do inputStream
     private MenuActionListener actionListener = new MenuActionListener();       // variavel que vai receber a referencia do MenuActionListener
     private boolean stop = false;                                               // variavel booleana que define um criterio de paragem do ciclo while
     private volatile String mensagem;                                           // variavel que vai receber as strings de mensagem a serem enviadas do lado do servidor               
     private String client_ip;                                                   // variavel que vai guardar o endereço ip dos clientes
+    private JFrameCustom conversacao;
+    
+    
+    
+    ////////////////////////////////////////////////////////////////////////////
+    ///////////////////////GETS E SETS//////////////////////////////////////////
     
     public synchronized void setMensagemServidor(String mensagem){              // metodo que recebe a mensagem a enviar pelo cliente
         this.mensagem = mensagem;
@@ -33,12 +39,13 @@ public class Conexao implements Runnable{
     }
     
   
+    ////////////////////////////////////////////////////////////////////////////
     
-    
-    Conexao(Socket server, MenuActionListener actionListener, String client_ip){ // construtor que recebe tres parametos, a instância do socket activo e a instancia do MenuActionListener, e informação do ip do cliente conectado
+    Conexao(Socket server, MenuActionListener actionListener, String client_ip, JFrameCustom conversacao){ // construtor que recebe tres parametos, a instância do socket activo e a instancia do MenuActionListener, e informação do ip do cliente conectado
       this.socket_activo = server;
       this.actionListener = actionListener;
       this.client_ip = client_ip;
+      this.conversacao = conversacao;
     }
 
     public void run () {
@@ -68,7 +75,7 @@ public class Conexao implements Runnable{
 
             if (recebido != null){                                              // Se recebeu informação no imputstream
                    System.out.println("S Mensagem que chegou ao servidor:"+ recebido);
-                   actionListener.appendInfo("S Cliente: " + recebido);
+                   conversacao.appendMensagem("Cliente: " + recebido);
                 // }
 
                  // Now write to the client
@@ -81,6 +88,7 @@ public class Conexao implements Runnable{
             if (getMensagemServidor() != null && getMensagemServidor().length() > 0){                                // caso haja uma mensagem nova a enviar
                     out.writeUTF( getMensagemServidor() );                      //Envia a string mensagem.
                     out.flush();  
+                    conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
                     setMensagemServidor(null);                                  // coloca a string a null para nao repetir envio
                                                }
             

@@ -23,7 +23,8 @@ public class SocketServidor implements Runnable{
     private DataInputStream in_s;                                               // reserva endereço de memória para canal de receber dados       
     private DataOutputStream out_s;                                             // reserva endereço de memória para canal de enviar dados 
     private boolean is_servidor = false;                                        // variavel boooleana que guarda informação sobre o papel da aplicação (servidor ou cliente)
-    private ArrayList<Conexao> vetor_conexoes= new ArrayList<Conexao>();        // cria um ArrayList com informação de todas as conexões que vao sendo criadas
+    //private ArrayList<Conexao> vetor_conexoes= new ArrayList<Conexao>();        // cria um ArrayList com informação de todas as conexões que vao sendo criadas
+    private JFrameCustom conversacao;
     
     public void stopThread(){                                                   // Metodo que recebe informação sobre se é suposto terminar a Thread, por ex para mudar de porto de escuta.
        stop = true;
@@ -36,9 +37,9 @@ public class SocketServidor implements Runnable{
         return is_servidor;
     } 
     
-    public ArrayList<Conexao> getVetorConexoes(){                               // Retorna o vetor de conexoes
+   /* public ArrayList<Conexao> getVetorConexoes(){                               // Retorna o vetor de conexoes
         return vetor_conexoes;
-    }
+    } */
     
     
     public SocketServidor(MenuActionListener actionListener, int porto){        // Construtor com parametros para receber a referencia do objeto MenuActionListener e porto
@@ -78,13 +79,26 @@ public class SocketServidor implements Runnable{
            actionListener.appendInfo("Utilizador com o endereço "+socket.getInetAddress().toString().replace("/", "") +" conectado...");                // Envia info para a JTexArea info
            actionListener.addClientesToList(socket.getInetAddress().toString().replace("/", ""));     // adiciona o ip do cliente conectado á java.awt.List
            
-      Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString().replace("/", ""));// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente
+      //////////////////////////////////////////////////////////////////////////
+      ///////////Constroi um JFrame para a conversação com o cliente////////////   
+         
+      conversacao = new JFrameCustom(actionListener);
+         conversacao.setTamanho(400, 400);
+         conversacao.setTitulo("Conversação com "+ socket.getInetAddress().toString().replace("/", "") );
+         conversacao.constroiFrame();
+         conversacao.show();
+                
+      //////////////////////////////////////////////////////////////////////////        
+           
+           
+           
+      Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString().replace("/", ""), conversacao);// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente e da janela de conversação
          Thread trd = new Thread(con_c);                                        // cria uma nova Thread para a instancia de conexao
          trd.start();                                                           // inicia a thread
-         vetor_conexoes.add(con_c);                                             // Adiciona a conexao ao arrayListe de conexoes  
-         actionListener.setConexaoAtiva(con_c);                                 // Envia a referencia de memória da conexão ativa para o actionListener
+         //vetor_conexoes.add(con_c);                                           // Adiciona a conexao ao arrayListe de conexoes  
+         actionListener.setConexaoAtiva();                                      // Invoca o método setConexaoActiva o menuActionListener
+         conversacao.setConexao(con_c);                                         // Envia a referência da conexao para instancia de JFrameCustom conversacao
       
-         
          
       socket_servidor.close();                                                  // termina o servidor de escuta
          

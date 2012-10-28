@@ -1,10 +1,15 @@
 
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -15,21 +20,51 @@ import javax.swing.JTextField;
  *
  * @author rft
  */
-public class JFrameCustom extends JFrame{
+public class JFrameCustom extends JFrame implements ActionListener{
     
          private int x;
          private int y;
          private String titulo;
          private MenuActionListener actionListener;
          private JTextField textField_porto;
+         private Border border = new LineBorder(Color.GRAY, 1);                 // border para as JTextArea
          
+         private JTextArea recebido;
+         private JTextArea mensagem;
+         private Conexao conexao;
          
    /////////////////////////////////////////////////////////////////////////////
    ////////////////////////////////////GETS E SETS//////////////////////////////
    public JTextField getTextField(){
        return textField_porto;
    }
-  
+
+    public JTextArea getRecebido() {
+        return recebido;
+    }
+
+    public void setRecebido(JTextArea recebido) {
+        this.recebido = recebido;
+    }
+
+    public JTextArea getMensagem() {
+        return mensagem;
+    }
+
+    public void setEnviar(JTextArea mensagem) {
+        this.mensagem = mensagem;
+    }
+
+ 
+    public void appendMensagem(String mensagem){
+       recebido.append(mensagem+"\n");
+    }
+
+    public void setConexao(Conexao conexao) {
+        this.conexao = conexao;
+    }
+   
+    
    /////////////////////////////////////////////////////////////////////////////
          
    public JFrameCustom(MenuActionListener actionListener){
@@ -95,10 +130,48 @@ public class JFrameCustom extends JFrame{
                                                 }
             
          
+         else if (titulo.contains("Conversação")){
+            recebido =  new JTextArea();
+                
+                recebido.setLineWrap(true);
+                recebido.setWrapStyleWord(true);
+                recebido.setEditable(false);
+                recebido.setBorder(border);
+                recebido.setBounds(5,50,385,200);
+            
+            mensagem = new JTextArea();
+                
+                mensagem.setBounds(5, 270, 300, 100);
+                mensagem.setBorder(border);                                                 // define a border da JtextArea mensagem
+                mensagem.setLineWrap(true);                                                 // define a JTextArea como Wrappable
+                mensagem.setWrapStyleWord(true);                                            // configura a JTextArea para fazer wrap ao texto se este for demasiado longo
+                
+                
+            JButton botao = new JButton("Enviar");
+                botao.setBounds(310, 270, 80, 100);
+                botao.addActionListener(this);
+                botao.setActionCommand("botao_enviar_s");
+            
+                
+                tempPanel.add(recebido);
+                tempPanel.add(mensagem);
+                tempPanel.add(botao);
+         }
+         
          
          add(tempPanel);
-         
-         
-        
+ 
                                         }
+    
+    //////////////////////////////////////////////////////////////////////////// 
+    //////////////Captação de eventos///////////////////////////////////////////
+    
+    public void actionPerformed(ActionEvent e) {
+        
+       if ("botao_enviar_s".equals(e.getActionCommand())){
+           conexao.setMensagemServidor(mensagem.getText());
+           mensagem.setText("");
+                                                         }
+        
+                                                }
 }

@@ -37,7 +37,7 @@ public class MenuActionListener implements ActionListener{
   private SocketCliente socket_c;
   private SocketServidor socket_s;
   private int same_machine = 1;                                                 // variavel que define se o cliente e servidor estão na mesma máquina
-  private Conexao con;                                                          // variavel que recebe a referencia da Conexao criada pelo socket servidor
+  
   
   //////////////////////////////////////////////////////////////////////////////
   /////////////////////GETS E SETS /////////////////////////////////////////////
@@ -58,22 +58,20 @@ public class MenuActionListener implements ActionListener{
       this.socket_s = socket;
   }
   
-  public void setConexaoAtiva(Conexao con){                                     // Recebe a referencia da conexao activa
-      this.con = con;
+  public void setConexaoAtiva(){                                                // Recebe informação de que foi escutada uma ligação e portanto a aplicação está em modo servidor
       led_servidor.setBackground(Color.green);                                  // activa o led indicativo como servidor
   } 
   
-  public void addClientesToList(String clientes){                                // insere valores (neste caso ips de clientes) na List
+  public void addClientesToList(String clientes){                               // insere valores (neste caso ips de clientes) na List
       clientes_conectados.add(clientes);
       
   }
   
-  public void removeClientesFromList(String clientes){
+  public void removeClientesFromList(String clientes){                          // quando um cliente se disconecta é invocado este método atravez da instancia de conexao que envia o respectivo ip do cliente desconectado
       
-    for (int i = 0; i< clientes_conectados.getItemCount(); i++){
-      if (clientes.compareTo(clientes_conectados.getItem(i).toString()) ==0)
+    for (int i = 0; i< clientes_conectados.getItemCount(); i++){                // um ciclo percorre o vetor de conexoes
+      if (clientes.compareTo(clientes_conectados.getItem(i).toString()) ==0)    // quando encontra o ip recebido na lista de clientes, remove o ip da lista
               clientes_conectados.remove(i);
-          ;
     }
   }
   //////////////////////////////////////////////////////////////////////////////
@@ -201,29 +199,29 @@ public class MenuActionListener implements ActionListener{
        
        ///////////Quando cliente////////////////////////////////////////////////  
          
-       if (contador == 0 && socket_s.getIsServidor() == false){
+       if (contador == 0 /*&& socket_s.getIsServidor() == false*/){
         led_cliente.setBackground(Color.green);                                 // Activia o led indicativo como cliente
         socket_c = menu.criarSocketCliente(nome_servidor.getText(), Integer.parseInt(porto_servidor.getText()), mensagem.getText()); // se sim cria um novo socket cliente 
         mensagem.setText("");                                                  // limpa o texto para se poder escrever o proximo texto
          contador++;               
                          }
-       else if (contador > 0 && socket_s.getIsServidor() == false){                                                                    // se o contador for maior que 1 significa que já foi criado um socket cliente e por isso apena especifica a nova mensagem a enviar
+       else if (contador > 0 /*&& socket_s.getIsServidor() == false*/){                                                                    // se o contador for maior que 1 significa que já foi criado um socket cliente e por isso apena especifica a nova mensagem a enviar
          socket_c.setMensagemCliente(mensagem.getText());
          mensagem.setText("");
            }
        
        
        ///////////////////Quando Servidor///////////////////////////////////////
-       
+      /* 
        if (socket_s.getIsServidor() == true){
            con.setMensagemServidor(mensagem.getText());
            mensagem.setText("");
                                             }
-     
+     */
      
                                                             }
      
-     
+           
      
      if("Sair".equals(e.getActionCommand())){                                   // caso tenha sido pressionado o botão de menu Exit
          System.exit(0);
