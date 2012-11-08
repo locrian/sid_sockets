@@ -26,6 +26,9 @@ public class SocketServidor implements Runnable{
     //private ArrayList<Conexao> vetor_conexoes= new ArrayList<Conexao>();        // cria um ArrayList com informação de todas as conexões que vao sendo criadas
     private JFrameCustom conversacao;
     
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////Gets e Sets/////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     public void stopThread(){                                                   // Metodo que recebe informação sobre se é suposto terminar a Thread, por ex para mudar de porto de escuta.
        stop = true;
                             }
@@ -41,7 +44,7 @@ public class SocketServidor implements Runnable{
         return vetor_conexoes;
     } */
     
-    
+    ////////////////////////////////////////////////////////////////////////////
     public SocketServidor(MenuActionListener actionListener, int porto){        // Construtor com parametros para receber a referencia do objeto MenuActionListener e porto
         this.actionListener = actionListener;     
         this.porto = porto;
@@ -49,13 +52,13 @@ public class SocketServidor implements Runnable{
     
     public void run(){                                                          // Sobreposição de método run da interface Runnable
        
-        int i =0;         
+       // int i =0;         
     
     while(!stop){                                                               // corre enquanto a ordem de paragem nao for dada, de modo a ficar á escuta de vários clientes
       try{
           
          
-            ServerSocket socket_servidor = new ServerSocket(porto);             // cria um novo server socket com a porta 4444 
+            ServerSocket socket_servidor = new ServerSocket(1234);              // cria um novo server socket com a porta 4444 
          
       
       /////////////////Ciclo de espera//////////////////////////////////////////
@@ -96,7 +99,7 @@ public class SocketServidor implements Runnable{
          Thread trd = new Thread(con_c);                                        // cria uma nova Thread para a instancia de conexao
          trd.start();                                                           // inicia a thread
          //vetor_conexoes.add(con_c);                                           // Adiciona a conexao ao arrayListe de conexoes  
-         actionListener.setConexaoAtiva();                                      // Invoca o método setConexaoActiva o menuActionListener
+         actionListener.setConexaoAtiva();                                      // Invoca o método setConexaoActiva do menuActionListener
          conversacao.setConexao(con_c);                                         // Envia a referência da conexao para instancia de JFrameCustom conversacao
       
          
