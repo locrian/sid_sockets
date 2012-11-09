@@ -58,7 +58,7 @@ public class SocketServidor implements Runnable{
       try{
           
          
-            ServerSocket socket_servidor = new ServerSocket(1234);              // cria um novo server socket com a porta 4444 
+            ServerSocket socket_servidor = new ServerSocket(porto);              // cria um novo server socket com a porta 4444 
          
       
       /////////////////Ciclo de espera//////////////////////////////////////////

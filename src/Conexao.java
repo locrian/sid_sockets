@@ -1,8 +1,11 @@
 
+import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
@@ -14,14 +17,16 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -47,8 +52,8 @@ public class Conexao implements Runnable{
     private PrivateKey chave_privada_s;
     private PublicKey chave_publica_s;
     private PublicKey chave_publica_c;
-    private byte[] encrypted;
-    private byte[] decrypted;
+    private byte[] encrypted = null;
+    private byte[] decrypted = null;
     private int first_con = 1;                                                  // variavel que se não for null envia a public key ao cliente como primeira mensagem
     private boolean first_con_envio = true;                                     // variavel que se for true envia a public key ao cliente como primeira mensagem
     private boolean first_con_recebido = true;                                  // variavel que se for true indica o recebimento da chave publica do cliente
@@ -85,7 +90,7 @@ public class Conexao implements Runnable{
     ////////////////////////////////////////////////////////////////////////////
     //////////////////////////Encriptar dados///////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    private byte[] encrypt(String s){
+    private void/*byte[]*/ encrypt(/*String s*/){
     
       try {  
         //keyGen = KeyGenerator.getInstance("Blowfish");                        // Cria um Key generator baseado no algoritmo BlowFish
@@ -93,7 +98,7 @@ public class Conexao implements Runnable{
         cipher_c = Cipher.getInstance("RSA");                                   // Cria um cipher baseado no algoritmo "RSA"
         cipher_c.init(Cipher.ENCRYPT_MODE, chave_publica_c);                    // Inicializa o cipher com a chave publica do cliente    
         
-        encrypted = cipher_c.doFinal(s.getBytes());                             // encripta a mensagem a enviar
+        //encrypted = cipher_c.doFinal(s.getBytes());                             // encripta a mensagem a enviar
         
       }catch(NoSuchAlgorithmException e){
           System.out.println(e);
@@ -101,13 +106,13 @@ public class Conexao implements Runnable{
           System.out.println(e);
       }catch(InvalidKeyException e){
           System.out.println(e);
-      }catch(IllegalBlockSizeException e){
+      //}catch(IllegalBlockSizeException e){
           System.out.println(e);
-      }catch(BadPaddingException e){
+      //}catch(BadPaddingException e){
           System.out.println(e);
       }
       
-      return encrypted;                                                         // retorna a mensagem encriptada
+     // return encrypted;                                                         // retorna a mensagem encriptada
       
                                   }
  
@@ -115,10 +120,14 @@ public class Conexao implements Runnable{
     ////////////////////////Desencriptar dados//////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     private String decrypt(byte[] mensagem){
+        String output ="";
       try{
-        cipher_s = Cipher.getInstance("RSA");
+        cipher_s = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher_s.init(Cipher.DECRYPT_MODE, chave_privada_s);
         decrypted = cipher_s.doFinal(mensagem);
+        
+        
+        output = encodeBASE64(decrypted);
     }catch(NoSuchAlgorithmException e){
         System.out.println(e);
     }catch(NoSuchPaddingException e){
@@ -129,10 +138,47 @@ public class Conexao implements Runnable{
         System.out.println(e);
     }catch(BadPaddingException e){
         System.out.println(e);
-    }
-      return decrypted.toString();
+    //}catch(UnsupportedEncodingException e){
+          System.out.println(e); 
+      }    
+      
+      return output;
+      //return decrypted.toString();
                                           }
   
+        /**
+    * Encode bytes array to BASE64 string
+    * @param bytes
+    * @return Encoded string
+    */
+    private static String encodeBASE64(byte[] bytes){
+        String temp = null;
+        //BASE64Encoder b64 = new BASE64Encoder();
+        //return b64.encode(bytes);
+        //return Base64.encodeBase64String(bytes);
+       try{
+        temp = new String(bytes, "UTF-8");
+        }catch(UnsupportedEncodingException e){
+            
+        }
+       return temp;
+    }
+
+    /**
+    * Decode BASE64 encoded string to bytes array
+    * @param text The string
+    * @return Bytes array
+    * @throws IOException
+    */
+    private static byte[] decodeBASE64(String text) throws IOException
+    {
+
+        BASE64Decoder b64 = new BASE64Decoder();
+        return b64.decodeBuffer(text);
+
+    }
+    
+    
     ////////////////////////////////////////////////////////////////////////////
     
     Conexao(Socket server, MenuActionListener actionListener, String client_ip, JFrameCustom conversacao){ // construtor que recebe tres parametos, a instância do socket activo e a instancia do MenuActionListener, e informação do ip do cliente conectado
@@ -146,13 +192,15 @@ public class Conexao implements Runnable{
         System.out.println("Entrou na conexao");
         
         generateKeyPair();                                                     // Invoca o método para gerar as chaves privadas para desencriptação e públicas para encriptação
-        
-      
+        //decrypt();
+     
       try {
         
         BufferedReader in = new BufferedReader(new InputStreamReader(socket_activo.getInputStream()));     // Cria um canal para receber dados.
         PrintWriter out = new PrintWriter(socket_activo.getOutputStream());  // Cria um canal para enviar
-
+        
+        InputStream inputStream = socket_activo.getInputStream();
+        CipherInputStream cis = new CipherInputStream(inputStream, cipher_s);
         
         //while((line = in.readUTF()) != null && !line.equals(".")) {
         while(!stop){
@@ -188,8 +236,30 @@ public class Conexao implements Runnable{
             }catch(InvalidKeySpecException e){
                          System.out.println(e);
                         }
-            try{   
-                recebido = in.readLine();                                        // a variavel "recebido", recebe informação do input buffer
+            try{
+              /*  int tamanho = cipher_s.getBlockSize();
+                System.out.println("1");
+                byte[] temp = new byte[1024];
+                System.out.println("2");
+                int bytesLidos;
+                while((bytesLidos = cis.read(temp)) != -1 ){
+                    System.out.println(temp+" "+" "+0+" "+" "+bytesLi4444dos);
+                }
+                System.out.println("3");
+                recebido = temp.toString();
+                System.out.println("4");
+                System.out.println(recebido); */
+                byte[] tmp = new byte[128];
+                inputStream.read(tmp);
+                System.out.println("S mensagem do cliente encriptada"+tmp);
+                recebido = decrypt(tmp);
+                System.out.println("S mensagem do cliente desencriptada "+ recebido);
+                //recebido = in.readLine();                                        // a variavel "recebido", recebe informação do input buffer
+                //System.out.println(recebido);
+                //System.out.println("S mensagem do cliente encriptada"+recebido);                
+                //decrypt(recebido.getBytes());
+                //String verifica = decrypt(recebido.getBytes());
+                //System.out.println("S Mensagem do cliente desencriptada "+ verifica);
             }catch(SocketTimeoutException sto){
                 System.out.println("S Timeout do inputstream do servidor");
             }
@@ -202,7 +272,7 @@ public class Conexao implements Runnable{
             if (recebido != null){                                              // Se recebeu informação no inputstream
                 //decrypt(recebido.getBytes());
                 System.out.println("S Mensagem que chegou ao servidor encriptada:"+ recebido);
-                conversacao.appendMensagem("Cliente: " + decrypt(recebido.getBytes()));
+                conversacao.appendMensagem("Cliente: " + recebido);
                 System.out.println("S Overall message is:" + recebido);
                 out.println("Mensagem \""+ recebido +"\" recebida");           // Envia mensagem de recebimento ao socket cliente
                 recebido = null;                                               // Coloca a variavel recebido a null         
@@ -211,7 +281,7 @@ public class Conexao implements Runnable{
             if (getMensagemServidor() != null && getMensagemServidor().length() > 0){                                // caso haja uma mensagem nova a enviar
                     try {
                                    
-                        out.println(encrypt(getMensagemServidor()));            // envia a mensagem encriptada
+                        out.println(getMensagemServidor());            // envia a mensagem encriptada
                         //out.println( getMensagemServidor() );                      //Envia a string mensagem.
                         out.flush();  
                         conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.

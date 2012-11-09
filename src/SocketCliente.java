@@ -1,7 +1,8 @@
-
+import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -18,9 +19,12 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -44,9 +48,10 @@ public class SocketCliente implements Runnable{
     private Cipher cipher_c;                                                    // cipher para ecriptar para o cliente
     private PublicKey chave_publica_c;
     private PublicKey chave_publica_s;
-    private byte[] encrypted;
+    private byte[] encrypted = null;
     private boolean first_con_envio = true;                                     // variavel que se for true envia a public key ao servidor como primeira mensagem
     private boolean first_con_recebido = true;                                  // variavel que se for true indica o recebimento da chave publica do servidor
+    private CipherOutputStream cos;
     ////////////////////////////////////////////////////////////////////////////
     /////////////////////////Gets e Sets////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -86,10 +91,12 @@ public class SocketCliente implements Runnable{
       try {  
         //keyGen = KeyGenerator.getInstance("Blowfish");                        // Cria um Key generator baseado no algoritmo BlowFish
         //SecretKey secretkey = keyGen.generateKey();                           // Cria uma secret key 
-        cipher_c = Cipher.getInstance("RSA");                                   // Cria um cipher baseado no algoritmo "RSA"
+        byte[] descodificada = decodeBASE64(s);  
+        cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");                  // Cria um cipher baseado no algoritmo "RSA"
         cipher_c.init(Cipher.ENCRYPT_MODE, chave_publica_s);                    // Inicializa o cipher com a chave publica do servidor     
+                    System.out.println("nProvider is: " + cipher_c.getProvider().getInfo());
         
-        encrypted = cipher_c.doFinal(s.getBytes());                             // encripta a mensagem a enviar
+        encrypted = cipher_c.doFinal(descodificada);                             // encripta a mensagem a enviar
         
       }catch(NoSuchAlgorithmException e){
           System.out.println(e);
@@ -101,13 +108,52 @@ public class SocketCliente implements Runnable{
           System.out.println(e);
       }catch(BadPaddingException e){
           System.out.println(e);
-      }
+      }catch(IOException e){
+          System.out.println(e); 
+      }    
       if (chave_publica_s == null)
           System.out.println("A chave de encriptação do servidor ainda nao esta disponivel");
       System.out.println("C Mensagem encriptada: "+encrypted);
       return encrypted;                                                         // retorna a mensagem encriptada
       
                                   }
+    
+    
+    
+
+        /**
+    * Encode bytes array to BASE64 string
+    * @param bytes
+    * @return Encoded string
+    */
+    private static String encodeBASE64(byte[] bytes)
+    {
+
+        BASE64Encoder b64 = new BASE64Encoder();
+        return b64.encode(bytes);
+
+    }
+
+    /**
+    * Decode BASE64 encoded string to bytes array
+    * @param text The string
+    * @return Bytes array
+    * @throws IOException
+    */
+    private static byte[] decodeBASE64(String text) throws IOException
+    {
+
+        //BASE64Decoder b64 = new BASE64Decoder();
+        //return b64.decodeBuffer(text);
+        //return Base64.decodeBase64(text);
+        return text.getBytes("UTF-8");
+    }
+
+
+
+ 
+    
+    
     ////////////////////////////////////////////////////////////////////////////
     
     public SocketCliente(MenuActionListener actionListener, String endereco, int porto, String mensagem){   // Construtor com parametros para receber a referencia do objeto MenuActionListener
@@ -121,7 +167,6 @@ public class SocketCliente implements Runnable{
     public void run(){                                                          // Sobreposição do método run da interface Runnable
         
         generateKeyPair();                                                      // gera as chaves publica e privada
-        
             //Conectar ao servidor.
         try{
                 Socket socket_client = new Socket(endereco, porto);                     // Criar um novo Socket 
@@ -129,9 +174,11 @@ public class SocketCliente implements Runnable{
 
 
                  BufferedReader in_c = new BufferedReader(new InputStreamReader(socket_client.getInputStream()));    //Cria um canal para receber dados.
-
                  PrintWriter out_c = new PrintWriter(socket_client.getOutputStream()); //Cria um canal para enviar dados
 
+                 OutputStream outputStream = socket_client.getOutputStream();
+
+                 
                  
            while(!stop){
           /*   try{   
@@ -209,6 +256,9 @@ public class SocketCliente implements Runnable{
                          chave_publica_s = keyFactory.generatePublic(keySpec);       // 
                          System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
                          first_con_envio = false;                               // coloca a variavel first_con_envio em false
+                         
+                         //encrypt();
+                         //cos = new CipherOutputStream(outputStream, cipher_c);
                     }catch(NoSuchAlgorithmException e){
                         System.out.println(e);
                     }catch(InvalidKeySpecException e){
@@ -218,8 +268,14 @@ public class SocketCliente implements Runnable{
 
                          if (getMensagemCliente() != null && getMensagemCliente().length() > 0){                            // caso haja uma mensagem nova a enviar
                             System.out.println("C Mensagem a enviar nao encriptada "+ getMensagemCliente()); // debug
-                            out_c.println( encrypt(getMensagemCliente()) );                      //Envia a string mensagem.
-                            out_c.flush();  
+                            //int tamanho = getMensagemCliente().getBytes().length; 
+                            //byte[] mensagem = getMensagemCliente().getBytes();
+                            //cos.write(mensagem);
+                            //cos.flush();
+                            //cos.close();
+                            byte[] mensagem = encrypt(getMensagemCliente());
+                            outputStream.write(mensagem, 0, mensagem.length );                      //Envia a string mensagem.
+                            outputStream.flush();  
                             setMensagemCliente(null);                                   // coloca a string a null para nao repetir envio
                                                                                                }
                           }
