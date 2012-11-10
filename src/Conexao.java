@@ -264,7 +264,7 @@ public class Conexao implements Runnable{
                 //System.out.println("S Mensagem que chegou ao servidor encriptada:"+ recebido);
                 conversacao.appendMensagem("Cliente: " + recebido);
                 //System.out.println("S Overall message is:" + recebido);
-                byte[] mensagem = encrypt("Mensagem \""+ recebido +"\" recebida");
+                byte[] mensagem = encrypt("Mensagem "+ recebido +" recebida");
                 outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
                 outputStream.flush();                               // Força o envio dos bytes em buffer
                 //out.println("Mensagem \""+ recebido +"\" recebida");           // Envia mensagem de recebimento ao socket cliente
@@ -279,7 +279,7 @@ public class Conexao implements Runnable{
                         byte[] mensagem = encrypt(getMensagemServidor());    // encripta a mensagem a enviar ao servidor
                         outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
                         outputStream.flush();
-                        //conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
+                        conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
                         setMensagemServidor(null);                                  // coloca a string a null para nao repetir envio
                     }catch(Exception e){
                         System.out.println(e);

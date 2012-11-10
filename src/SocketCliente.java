@@ -1,7 +1,5 @@
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
@@ -23,7 +21,6 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
-import sun.misc.BASE64Encoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -116,29 +113,25 @@ public class SocketCliente implements Runnable{
     ////////////////////////////////////////////////////////////////////////////
     private String decrypt(byte[] mensagem){
         String output ="";
-      try{
-        cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        cipher_c.init(Cipher.DECRYPT_MODE, chave_privada_c);
-        decrypted = cipher_c.doFinal(mensagem);
-          
-        output = encodeUTF8(decrypted);
-    }catch(NoSuchAlgorithmException e){
-        System.out.println(e);
-    }catch(NoSuchPaddingException e){
-        System.out.println(e);
-    }catch(InvalidKeyException e){
-        System.out.println(e);
-    }catch(IllegalBlockSizeException e){
-        System.out.println(e);
-    }catch(BadPaddingException e){
-        System.out.println(e);
-    //}catch(UnsupportedEncodingException e){
-          System.out.println(e); 
-      }    
+        try{
+            cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            cipher_c.init(Cipher.DECRYPT_MODE, chave_privada_c);
+            decrypted = cipher_c.doFinal(mensagem);
+            output = encodeUTF8(decrypted);
+        }catch(NoSuchAlgorithmException e){
+            System.out.println(e);
+        }catch(NoSuchPaddingException e){
+            System.out.println(e);
+        }catch(InvalidKeyException e){
+            System.out.println(e);
+        }catch(IllegalBlockSizeException e){
+            System.out.println(e);
+        }catch(BadPaddingException e){
+            System.out.println(e);
+        }    
       
-      return output;
-      //return decrypted.toString();
-                                          }
+        return output;
+   }
     
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////Encode / Decoder de strings para Bytes UTF-8/////////////
@@ -150,7 +143,7 @@ public class SocketCliente implements Runnable{
         }catch(UnsupportedEncodingException e){
             System.out.println(e);
         }
-       return temp;
+        return temp;
     }
 
     private static byte[] decodeUTF8(String text) throws IOException{           // Método que recebe uma String e converte para bytes UTF8
@@ -174,22 +167,20 @@ public class SocketCliente implements Runnable{
     //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*//
     ///////////////////////Programa começa a executar//////////////////////////
     //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*//
+    @Override
     public void run(){                                                          // Sobreposição do método run da interface Runnable
-        geraKeyPair();                                                      // Invoca o método generateKeyPair
+        geraKeyPair();                                                          // Invoca o método generateKeyPair
         
         //Conectar ao servidor.
         try{
-            Socket socket_client = new Socket(endereco, porto);                     // Criar um novo Socket 
-            socket_client.setSoTimeout(1000);                                       // Especifica um timeout para o inputstream, para nao ficar bloquado a espera de dados
+            Socket socket_client = new Socket(endereco, porto);                 // Criar um novo Socket 
+            socket_client.setSoTimeout(1000);                                   // Especifica um timeout para o inputstream, para nao ficar bloquado a espera de dados
 
-            //BufferedReader in_c = new BufferedReader(new InputStreamReader(socket_client.getInputStream()));    //Cria um canal para receber dados.
-            InputStream inputStream = socket_client.getInputStream();
-            //PrintWriter out_c = new PrintWriter(socket_client.getOutputStream()); //Cria um canal para enviar dados
-            OutputStream outputStream = socket_client.getOutputStream();
+            InputStream inputStream = socket_client.getInputStream();           // cria um canal de recebimento de dados
+            OutputStream outputStream = socket_client.getOutputStream();        // cria um canal de envio de dados
      
             while(!stop){         
-                try{                                                        // uma vez que especificamos um timeout para o inputstream necessitamos do try/catch
-                    //recebido = in_c.readLine();                         // verifica se há mensagens a receber no inputStream
+                try{                                                            // uma vez que especificamos um timeout para o inputstream necessitamos do try/catch
                     byte[] tmp = new byte[128];
                     inputStream.read(tmp);
                     System.out.println("S mensagem do cliente encriptada"+tmp);
@@ -202,11 +193,11 @@ public class SocketCliente implements Runnable{
                     
                 if (recebido != null){                                          // Se recebeu informação no imputstream
                     System.out.println("C Mensagem que chegou ao cliente:"+ recebido); //debug
-                    actionListener.appendInfo("C Servidor: " + recebido);        // envia a informação para a JTextAreaInfo
-                    recebido = null;                                             // Coloca a mensagem a null para nao voltar a repetir
+                    actionListener.appendInfo("C Servidor: " + recebido);       // envia a informação para a JTextAreaInfo
+                    recebido = null;                                            // Coloca a mensagem a null para nao voltar a repetir
                 }
   
-                if (first_con_envio){                                      // caso seja o primeiro contacto com o servidor
+                if (first_con_envio){                                           // caso seja o primeiro contacto com o servidor
                     try{  
                         System.out.println("C chave_publica: "+DatatypeConverter.printHexBinary(chave_publica_c.getEncoded()));
                         ByteBuffer bb = ByteBuffer.allocate(4);
@@ -215,19 +206,19 @@ public class SocketCliente implements Runnable{
                         socket_client.getOutputStream().write(chave_publica_c.getEncoded());
                         socket_client.getOutputStream().flush();
                         
-                        byte[] temp_chave_s = new byte[4];                          // cria um novo array de bytes com tamanho 4
-                        socket_client.getInputStream().read(temp_chave_s,0,4);      // 
-                        ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);              // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
-                        int tamanho = bb_s.getInt();                                  // guarda o tamanho do bytebuffer
-                        System.out.println(tamanho);                                // debug
-                        byte[] temp_chave_s_bytes = new byte[tamanho];              // cria um novo array de bytes com o tamanho do bytebuffer 
-                        socket_client.getInputStream().read(temp_chave_s_bytes);    //
+                        byte[] temp_chave_s = new byte[4];                      // cria um novo array de bytes com tamanho 4
+                        socket_client.getInputStream().read(temp_chave_s,0,4);  // 
+                        ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);        // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
+                        int tamanho = bb_s.getInt();                            // guarda o tamanho do bytebuffer
+                        System.out.println(tamanho);                            // debug
+                        byte[] temp_chave_s_bytes = new byte[tamanho];          // cria um novo array de bytes com o tamanho do bytebuffer 
+                        socket_client.getInputStream().read(temp_chave_s_bytes);//
                         System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));         //debug
                         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    //
                         KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
-                        chave_publica_s = keyFactory.generatePublic(keySpec);       // 
+                        chave_publica_s = keyFactory.generatePublic(keySpec);   // 
                         System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
-                        first_con_envio = false;                               // coloca a variavel first_con_envio em false
+                        first_con_envio = false;                                // coloca a variavel first_con_envio em false
                     
                     }catch(NoSuchAlgorithmException e){
                         System.out.println(e);
@@ -246,11 +237,9 @@ public class SocketCliente implements Runnable{
                 }
                 System.out.println("C Fim de ciclo");                           //debug
             }                                                                   // Termina o ciclo While   
-            inputStream.available();
-            //in_c.close();                                                       //Fecha o canal de entrada de dados.
-            //out_c.close();
+            inputStream.close();                                                // Fecha o canal de entrada de dados
             outputStream.close();                                               // Fecha o canal de saída de dados 
-            socket_client.close();                                              //Fecha o socket.
+            socket_client.close();                                              // Fecha o socket.
 
         }catch(UnknownHostException e){
             actionListener.appendInfo("Host Desconhecido");

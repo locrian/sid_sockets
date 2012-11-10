@@ -6,6 +6,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
@@ -29,7 +30,8 @@ public class JFrameCustom extends JFrame implements ActionListener{
          private JTextField textField_porto;
          private Border border = new LineBorder(Color.GRAY, 1);                 // border para as JTextArea
          
-         private JTextArea recebido;
+         private JTextArea recebido = new JTextArea();
+         private JScrollPane scrollPane = new JScrollPane(recebido);            // JScrollPane para colocar a JTextArea Info
          private JTextArea mensagem;
          private Conexao conexao;
          
@@ -131,15 +133,13 @@ public class JFrameCustom extends JFrame implements ActionListener{
             
          
          else if (titulo.contains("Conversação")){
-            recebido =  new JTextArea();
-                
+                scrollPane.setBounds(5, 50, 385, 200);
+                scrollPane.setBorder(border);
                 recebido.setLineWrap(true);
                 recebido.setWrapStyleWord(true);
                 recebido.setEditable(false);
-                recebido.setBorder(border);
-                recebido.setBounds(5,50,385,200);
             
-            mensagem = new JTextArea();
+                mensagem = new JTextArea();
                 
                 mensagem.setBounds(5, 270, 300, 100);
                 mensagem.setBorder(border);                                                 // define a border da JtextArea mensagem
@@ -153,7 +153,7 @@ public class JFrameCustom extends JFrame implements ActionListener{
                 botao.setActionCommand("botao_enviar_s");
             
                 
-                tempPanel.add(recebido);
+                tempPanel.add(scrollPane);
                 tempPanel.add(mensagem);
                 tempPanel.add(botao);
          }

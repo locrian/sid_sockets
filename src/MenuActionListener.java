@@ -108,7 +108,10 @@ public class MenuActionListener implements ActionListener{
     //configuração da JTextArea info
     scrollPane.setBounds(20, 60, 390, 180);                                     // configura a posição e tamanho da JTextArea
     scrollPane.setBorder(border);                                               // define o contorno da JTextArea
+    scrollPane.setAutoscrolls(true);
     info.setEditable(false);                                                    // desablita a edição do componente uma vez que é só de informação
+    info.setLineWrap(true);                                                     // habilita o line wrap da TextArea Info
+    info.setWrapStyleWord(true);
     
     //configuração da List clientes_conectados
     scrollPane_c.setBounds(420, 60, 150, 180);                                  // configura a posição e tamanho da JTextArea
@@ -203,7 +206,7 @@ public class MenuActionListener implements ActionListener{
         led_cliente.setBackground(Color.green);                                 // Activia o led indicativo como cliente
         socket_c = menu.criarSocketCliente(nome_servidor.getText(), Integer.parseInt(porto_servidor.getText()), mensagem.getText()); // se sim cria um novo socket cliente 
         mensagem.setText("");                                                  // limpa o texto para se poder escrever o proximo texto
-         contador++;               
+        contador++;               
                          }
        else if (contador > 0 /*&& socket_s.getIsServidor() == false*/){                                                                    // se o contador for maior que 1 significa que já foi criado um socket cliente e por isso apena especifica a nova mensagem a enviar
          socket_c.setMensagemCliente(mensagem.getText());
