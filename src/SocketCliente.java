@@ -1,9 +1,9 @@
-import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -23,7 +23,6 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
-import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 /*
@@ -49,6 +48,7 @@ public class SocketCliente implements Runnable{
     private PublicKey chave_publica_c;
     private PublicKey chave_publica_s;
     private byte[] encrypted = null;
+    private byte[] decrypted = null;
     private boolean first_con_envio = true;                                     // variavel que se for true envia a public key ao servidor como primeira mensagem
     private boolean first_con_recebido = true;                                  // variavel que se for true indica o recebimento da chave publica do servidor
     private CipherOutputStream cos;
@@ -68,241 +68,198 @@ public class SocketCliente implements Runnable{
     ////////////////////////////////////////////////////////////////////////////
     //////////////////Gerar as chaves publicas e privadas///////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    private void generateKeyPair(){
-    try {
-        KeyPairGenerator keyPg = KeyPairGenerator.getInstance("RSA");           // Gerador de chaves pubicas e privadas
-        keyPg.initialize(1024);                                                 // Inicializa o KeyPair especificando o tamanho da chave e o algoritmo
-        KeyPair pair = keyPg.generateKeyPair();                                 // Gera a chaves
-        chave_privada_c = pair.getPrivate();                                    // cria uma instancia de PrivateKey através da chave privada gerada
-        chave_publica_c = pair.getPublic();                                     // cria uma instância de PublicKey através da chave pública gerada
-
-    
-    }catch(NoSuchAlgorithmException e){   
-            System.out.println(e);
+    private void geraKeyPair(){
+      try {
+          KeyPairGenerator keyPg = KeyPairGenerator.getInstance("RSA");         // Gerador de chaves pubicas e privadas baseadas no algoritmo RSA
+          keyPg.initialize(1024);                                               // Inicializa o KeyPair especificando o tamanho da chave
+          KeyPair pair = keyPg.generateKeyPair();                               // Gera a chaves
+          chave_privada_c = pair.getPrivate();                                  // cria uma instancia de PrivateKey através da chave privada gerada
+          chave_publica_c = pair.getPublic();                                   // cria uma instância de PublicKey através da chave pública gerada  
+      }catch(NoSuchAlgorithmException e){   
+          System.out.println(e);
+      }
     }
-    
-                                  }
     
     ////////////////////////////////////////////////////////////////////////////
     //////////////////////////Encriptar dados///////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    private byte[] encrypt(String s){
+    private byte[] encrypt(String mensagem){ 
+        try {  
+            byte[] descodificada = decodeUTF8(mensagem);  
+            cipher_s = Cipher.getInstance("RSA/ECB/PKCS1Padding");                // Cria um cipher baseado no algoritmo "RSA"
+            cipher_s.init(Cipher.ENCRYPT_MODE, chave_publica_s);                  // Inicializa o cipher com a chave publica do servidor     
+            //System.out.println("nProvider is: " + cipher_c.getProvider().getInfo());// debug
+        
+            encrypted = cipher_s.doFinal(descodificada);                          // encripta a mensagem a enviar       
+        }catch(NoSuchAlgorithmException e){
+            System.out.println(e);
+        }catch(NoSuchPaddingException e){
+            System.out.println(e);
+        }catch(InvalidKeyException e){
+            System.out.println(e);
+        }catch(IllegalBlockSizeException e){
+            System.out.println(e);
+        }catch(BadPaddingException e){
+            System.out.println(e);
+        }catch(IOException e){
+            System.out.println(e); 
+        }    
+        if (chave_publica_s == null)
+            System.out.println("A chave de encriptação do servidor ainda nao esta disponivel");
+        System.out.println("C Mensagem encriptada: "+encrypted);                  // debug
+        return encrypted;                                                         // retorna a mensagem encriptada
+      
+    }
     
-      try {  
-        //keyGen = KeyGenerator.getInstance("Blowfish");                        // Cria um Key generator baseado no algoritmo BlowFish
-        //SecretKey secretkey = keyGen.generateKey();                           // Cria uma secret key 
-        byte[] descodificada = decodeBASE64(s);  
-        cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");                  // Cria um cipher baseado no algoritmo "RSA"
-        cipher_c.init(Cipher.ENCRYPT_MODE, chave_publica_s);                    // Inicializa o cipher com a chave publica do servidor     
-                    System.out.println("nProvider is: " + cipher_c.getProvider().getInfo());
-        
-        encrypted = cipher_c.doFinal(descodificada);                             // encripta a mensagem a enviar
-        
-      }catch(NoSuchAlgorithmException e){
-          System.out.println(e);
-      }catch(NoSuchPaddingException e){
-          System.out.println(e);
-      }catch(InvalidKeyException e){
-          System.out.println(e);
-      }catch(IllegalBlockSizeException e){
-          System.out.println(e);
-      }catch(BadPaddingException e){
-          System.out.println(e);
-      }catch(IOException e){
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////Desencriptar dados//////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    private String decrypt(byte[] mensagem){
+        String output ="";
+      try{
+        cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        cipher_c.init(Cipher.DECRYPT_MODE, chave_privada_c);
+        decrypted = cipher_c.doFinal(mensagem);
+          
+        output = encodeUTF8(decrypted);
+    }catch(NoSuchAlgorithmException e){
+        System.out.println(e);
+    }catch(NoSuchPaddingException e){
+        System.out.println(e);
+    }catch(InvalidKeyException e){
+        System.out.println(e);
+    }catch(IllegalBlockSizeException e){
+        System.out.println(e);
+    }catch(BadPaddingException e){
+        System.out.println(e);
+    //}catch(UnsupportedEncodingException e){
           System.out.println(e); 
       }    
-      if (chave_publica_s == null)
-          System.out.println("A chave de encriptação do servidor ainda nao esta disponivel");
-      System.out.println("C Mensagem encriptada: "+encrypted);
-      return encrypted;                                                         // retorna a mensagem encriptada
       
-                                  }
+      return output;
+      //return decrypted.toString();
+                                          }
     
-    
-    
-
-        /**
-    * Encode bytes array to BASE64 string
-    * @param bytes
-    * @return Encoded string
-    */
-    private static String encodeBASE64(byte[] bytes)
-    {
-
-        BASE64Encoder b64 = new BASE64Encoder();
-        return b64.encode(bytes);
-
+    ////////////////////////////////////////////////////////////////////////////
+    ///////////////////Encode / Decoder de strings para Bytes UTF-8/////////////
+    ////////////////////////////////////////////////////////////////////////////
+    private static String encodeUTF8(byte[] bytes){
+        String temp = null;
+        try{
+            temp = new String(bytes, "UTF-8");
+        }catch(UnsupportedEncodingException e){
+            System.out.println(e);
+        }
+       return temp;
     }
 
-    /**
-    * Decode BASE64 encoded string to bytes array
-    * @param text The string
-    * @return Bytes array
-    * @throws IOException
-    */
-    private static byte[] decodeBASE64(String text) throws IOException
-    {
-
-        //BASE64Decoder b64 = new BASE64Decoder();
-        //return b64.decodeBuffer(text);
-        //return Base64.decodeBase64(text);
+    private static byte[] decodeUTF8(String text) throws IOException{           // Método que recebe uma String e converte para bytes UTF8
+       
         return text.getBytes("UTF-8");
     }
 
 
-
- 
-    
-    
+    ////////////////////////////////////////////////////////////////////////////
+    //////////////////////////CONSTRUTORES//////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     
     public SocketCliente(MenuActionListener actionListener, String endereco, int porto, String mensagem){   // Construtor com parametros para receber a referencia do objeto MenuActionListener
-        this.actionListener = actionListener;     
+        this.actionListener = actionListener;                                                               // o endereço do servidor, o porto e a mensagem a enviar
         this.endereco = endereco;
         this.porto = porto;
         this.mensagem = mensagem;
     }
     
     
+    //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*//
+    ///////////////////////Programa começa a executar//////////////////////////
+    //*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*//
     public void run(){                                                          // Sobreposição do método run da interface Runnable
+        geraKeyPair();                                                      // Invoca o método generateKeyPair
         
-        generateKeyPair();                                                      // gera as chaves publica e privada
-            //Conectar ao servidor.
+        //Conectar ao servidor.
         try{
-                Socket socket_client = new Socket(endereco, porto);                     // Criar um novo Socket 
-                socket_client.setSoTimeout(1000);                                       // Especifica um timeout para o inputstream, para nao ficar bloquado a espera de dados
+            Socket socket_client = new Socket(endereco, porto);                     // Criar um novo Socket 
+            socket_client.setSoTimeout(1000);                                       // Especifica um timeout para o inputstream, para nao ficar bloquado a espera de dados
 
-
-                 BufferedReader in_c = new BufferedReader(new InputStreamReader(socket_client.getInputStream()));    //Cria um canal para receber dados.
-                 PrintWriter out_c = new PrintWriter(socket_client.getOutputStream()); //Cria um canal para enviar dados
-
-                 OutputStream outputStream = socket_client.getOutputStream();
-
-                 
-                 
-           while(!stop){
-          /*   try{   
-                 if (first_con_recebido == true){                               // se for a primeira conexao
-                    byte[] temp_chave_s = new byte[4];                          // cria um novo array de bytes com tamanho 4
-                    socket_client.getInputStream().read(temp_chave_s,0,4);      // 
-                    ByteBuffer bb = ByteBuffer.wrap(temp_chave_s);              // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
-                    int tamanho = bb.getInt();                                  // guarda o tamanho do bytebuffer
-                    System.out.println(tamanho);                                // debug
-                    byte[] temp_chave_s_bytes = new byte[tamanho];              // cria um novo array de bytes com o tamanho do bytebuffer 
-                    socket_client.getInputStream().read(temp_chave_s_bytes);    //
-                    System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));         //debug
-                    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    //
-                    KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
-                    chave_publica_s = keyFactory.generatePublic(keySpec);       // 
-                    System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
-                    first_con_recebido = false;                                 // coloca a variavel booleana em false
-                                                 }
-             }catch(NoSuchAlgorithmException e){
-                        System.out.println(e);
-             }catch(InvalidKeySpecException e){
-                         System.out.println(e);
-                        }  
-                        */
-                    try{                                                        // uma vez que especificamos um timeout para o inputstream necessitamos do try/catch
-                        recebido = in_c.readLine();                         // verifica se há mensagens a receber no inputStream
-                    }catch(SocketTimeoutException sto){
-                        System.out.println("C Timeout do inputstream");                 
-                    }
-                        System.out.println("C Socket cliente: "+ getMensagemCliente() );// debug
-
+            //BufferedReader in_c = new BufferedReader(new InputStreamReader(socket_client.getInputStream()));    //Cria um canal para receber dados.
+            InputStream inputStream = socket_client.getInputStream();
+            //PrintWriter out_c = new PrintWriter(socket_client.getOutputStream()); //Cria um canal para enviar dados
+            OutputStream outputStream = socket_client.getOutputStream();
+     
+            while(!stop){         
+                try{                                                        // uma vez que especificamos um timeout para o inputstream necessitamos do try/catch
+                    //recebido = in_c.readLine();                         // verifica se há mensagens a receber no inputStream
+                    byte[] tmp = new byte[128];
+                    inputStream.read(tmp);
+                    System.out.println("S mensagem do cliente encriptada"+tmp);
+                    recebido = decrypt(tmp);
+                    System.out.println("S mensagem do cliente desencriptada "+ recebido);
+                }catch(SocketTimeoutException sto){
+                    System.out.println("C Timeout do inputstream");                 
+                }
+                System.out.println("C Socket cliente: "+ getMensagemCliente() );// debug
                     
-                    if (recebido != null){                                      // Se recebeu informação no imputstream
-                     /*  try{   
-                        if (first_con_recebido){
-                            System.out.println("C A receber public key do servidor"); //debug
-                            byte[] temp_chave = recebido.getBytes();            // Recebe a chave publica do servidor como um array de bytes
-                            chave_publica_s = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(temp_chave)); // Passa o array de bytes para a instancia de chave publica do servidor deste objeto
-                            first_con_recebido = false;                         // coloca a variavel booleana em false
-                            recebido = null;
-                        }else{ */
+                if (recebido != null){                                          // Se recebeu informação no imputstream
+                    System.out.println("C Mensagem que chegou ao cliente:"+ recebido); //debug
+                    actionListener.appendInfo("C Servidor: " + recebido);        // envia a informação para a JTextAreaInfo
+                    recebido = null;                                             // Coloca a mensagem a null para nao voltar a repetir
+                }
+  
+                if (first_con_envio){                                      // caso seja o primeiro contacto com o servidor
+                    try{  
+                        System.out.println("C chave_publica: "+DatatypeConverter.printHexBinary(chave_publica_c.getEncoded()));
+                        ByteBuffer bb = ByteBuffer.allocate(4);
+                        bb.putInt(chave_publica_c.getEncoded().length);
+                        socket_client.getOutputStream().write(bb.array());
+                        socket_client.getOutputStream().write(chave_publica_c.getEncoded());
+                        socket_client.getOutputStream().flush();
                         
-                           System.out.println("C Mensagem que chegou ao cliente:"+ recebido); //debug
-                           actionListener.appendInfo("C Servidor: " + recebido);        // envia a informação para a JTextAreaInfo
-                           recebido = null;                                             // Coloca a mensagem a null para nao voltar a repetir
-                         /*    }  
-                        }catch(NoSuchAlgorithmException e){
-                        System.out.println(e);
-                        }catch(InvalidKeySpecException e){
-                         System.out.println("C Erro no try de recebimento da chave "+ e);
-                        } */
-                                          }
+                        byte[] temp_chave_s = new byte[4];                          // cria um novo array de bytes com tamanho 4
+                        socket_client.getInputStream().read(temp_chave_s,0,4);      // 
+                        ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);              // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
+                        int tamanho = bb_s.getInt();                                  // guarda o tamanho do bytebuffer
+                        System.out.println(tamanho);                                // debug
+                        byte[] temp_chave_s_bytes = new byte[tamanho];              // cria um novo array de bytes com o tamanho do bytebuffer 
+                        socket_client.getInputStream().read(temp_chave_s_bytes);    //
+                        System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));         //debug
+                        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    //
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
+                        chave_publica_s = keyFactory.generatePublic(keySpec);       // 
+                        System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
+                        first_con_envio = false;                               // coloca a variavel first_con_envio em false
                     
-                    
-
-                     if (first_con_envio){                                      // caso seja o primeiro contacto com o servidor
-                      try{  
-                         System.out.println("C chave_publica: "+DatatypeConverter.printHexBinary(chave_publica_c.getEncoded()));
-                         ByteBuffer bb = ByteBuffer.allocate(4);
-                         bb.putInt(chave_publica_c.getEncoded().length);
-                         socket_client.getOutputStream().write(bb.array());
-                         socket_client.getOutputStream().write(chave_publica_c.getEncoded());
-                         socket_client.getOutputStream().flush();
-                        
-                         byte[] temp_chave_s = new byte[4];                          // cria um novo array de bytes com tamanho 4
-                         socket_client.getInputStream().read(temp_chave_s,0,4);      // 
-                         ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);              // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
-                         int tamanho = bb_s.getInt();                                  // guarda o tamanho do bytebuffer
-                         System.out.println(tamanho);                                // debug
-                         byte[] temp_chave_s_bytes = new byte[tamanho];              // cria um novo array de bytes com o tamanho do bytebuffer 
-                         socket_client.getInputStream().read(temp_chave_s_bytes);    //
-                         System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));         //debug
-                         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    //
-                         KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
-                         chave_publica_s = keyFactory.generatePublic(keySpec);       // 
-                         System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
-                         first_con_envio = false;                               // coloca a variavel first_con_envio em false
-                         
-                         //encrypt();
-                         //cos = new CipherOutputStream(outputStream, cipher_c);
                     }catch(NoSuchAlgorithmException e){
                         System.out.println(e);
                     }catch(InvalidKeySpecException e){
                         System.out.println(e);    
                     }     
-                     }else{
-
-                         if (getMensagemCliente() != null && getMensagemCliente().length() > 0){                            // caso haja uma mensagem nova a enviar
-                            System.out.println("C Mensagem a enviar nao encriptada "+ getMensagemCliente()); // debug
-                            //int tamanho = getMensagemCliente().getBytes().length; 
-                            //byte[] mensagem = getMensagemCliente().getBytes();
-                            //cos.write(mensagem);
-                            //cos.flush();
-                            //cos.close();
-                            byte[] mensagem = encrypt(getMensagemCliente());
-                            outputStream.write(mensagem, 0, mensagem.length );                      //Envia a string mensagem.
-                            outputStream.flush();  
-                            setMensagemCliente(null);                                   // coloca a string a null para nao repetir envio
-                                                                                               }
-                          }
-                    
-
-              System.out.println("C Fim de ciclo");                                     //debug
-                }   
-
-
-
-                 in_c.close();                                                          //Fecha os canais de entrada e saída.
-                 out_c.close();
-
-                 socket_client.close();                                                 //Fecha o socket.
-
-
-                }catch(UnknownHostException e){
-                     actionListener.appendInfo("Host Desconhecido");
-
-                }catch(IOException e){
-                     actionListener.appendInfo("Host selecionado não está disponível");
-
-                }catch(IllegalArgumentException Ia){
-                    actionListener.appendInfo("Porto mal inserido");
                 }
+                else{
+                    if (getMensagemCliente() != null && getMensagemCliente().length() > 0){ // caso haja uma mensagem nova a enviar
+                            System.out.println("C Mensagem a enviar nao encriptada "+ getMensagemCliente()); // debug
+                            byte[] mensagem = encrypt(getMensagemCliente());    // encripta a mensagem a enviar ao servidor
+                            outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
+                            outputStream.flush();                               // Força o envio dos bytes em buffer
+                            setMensagemCliente(null);                           // coloca a string a null para nao repetir envio
+                    }
+                }
+                System.out.println("C Fim de ciclo");                           //debug
+            }                                                                   // Termina o ciclo While   
+            inputStream.available();
+            //in_c.close();                                                       //Fecha o canal de entrada de dados.
+            //out_c.close();
+            outputStream.close();                                               // Fecha o canal de saída de dados 
+            socket_client.close();                                              //Fecha o socket.
 
-        
+        }catch(UnknownHostException e){
+            actionListener.appendInfo("Host Desconhecido");
+        }catch(IOException e){
+            actionListener.appendInfo("Host selecionado não está disponível");
+        }catch(IllegalArgumentException Ia){
+            actionListener.appendInfo("Porto mal inserido");
+        }
+     
     }
     
 }

@@ -1,9 +1,9 @@
 
-import org.apache.commons.codec.binary.Base64;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
@@ -26,7 +26,6 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
 import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -90,15 +89,16 @@ public class Conexao implements Runnable{
     ////////////////////////////////////////////////////////////////////////////
     //////////////////////////Encriptar dados///////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
-    private void/*byte[]*/ encrypt(/*String s*/){
+    private byte[] encrypt(String mensagem){
     
       try {  
         //keyGen = KeyGenerator.getInstance("Blowfish");                        // Cria um Key generator baseado no algoritmo BlowFish
         //SecretKey secretkey = keyGen.generateKey();                           // Cria uma secret key 
-        cipher_c = Cipher.getInstance("RSA");                                   // Cria um cipher baseado no algoritmo "RSA"
+        byte[] descodificada = decodeUTF8(mensagem);  
+        cipher_c = Cipher.getInstance("RSA/ECB/PKCS1Padding");                                   // Cria um cipher baseado no algoritmo "RSA"
         cipher_c.init(Cipher.ENCRYPT_MODE, chave_publica_c);                    // Inicializa o cipher com a chave publica do cliente    
         
-        //encrypted = cipher_c.doFinal(s.getBytes());                             // encripta a mensagem a enviar
+        encrypted = cipher_c.doFinal(descodificada);                             // encripta a mensagem a enviar
         
       }catch(NoSuchAlgorithmException e){
           System.out.println(e);
@@ -106,16 +106,19 @@ public class Conexao implements Runnable{
           System.out.println(e);
       }catch(InvalidKeyException e){
           System.out.println(e);
-      //}catch(IllegalBlockSizeException e){
+      }catch(IllegalBlockSizeException e){
           System.out.println(e);
-      //}catch(BadPaddingException e){
+      }catch(BadPaddingException e){
           System.out.println(e);
-      }
+      }catch(IOException e){
+            System.out.println(e); 
+        }    
       
-     // return encrypted;                                                         // retorna a mensagem encriptada
+      return encrypted;                                                         // retorna a mensagem encriptada
       
                                   }
  
+    
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////Desencriptar dados//////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -125,9 +128,8 @@ public class Conexao implements Runnable{
         cipher_s = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher_s.init(Cipher.DECRYPT_MODE, chave_privada_s);
         decrypted = cipher_s.doFinal(mensagem);
-        
-        
-        output = encodeBASE64(decrypted);
+          
+        output = encodeUTF8(decrypted);
     }catch(NoSuchAlgorithmException e){
         System.out.println(e);
     }catch(NoSuchPaddingException e){
@@ -145,37 +147,24 @@ public class Conexao implements Runnable{
       return output;
       //return decrypted.toString();
                                           }
+    
+    
   
-        /**
-    * Encode bytes array to BASE64 string
-    * @param bytes
-    * @return Encoded string
-    */
-    private static String encodeBASE64(byte[] bytes){
+  
+    private static String encodeUTF8(byte[] bytes){
         String temp = null;
-        //BASE64Encoder b64 = new BASE64Encoder();
-        //return b64.encode(bytes);
-        //return Base64.encodeBase64String(bytes);
-       try{
-        temp = new String(bytes, "UTF-8");
+        try{
+            temp = new String(bytes, "UTF-8");
         }catch(UnsupportedEncodingException e){
-            
+            System.out.println(e);
         }
        return temp;
     }
 
-    /**
-    * Decode BASE64 encoded string to bytes array
-    * @param text The string
-    * @return Bytes array
-    * @throws IOException
-    */
-    private static byte[] decodeBASE64(String text) throws IOException
-    {
-
-        BASE64Decoder b64 = new BASE64Decoder();
-        return b64.decodeBuffer(text);
-
+ 
+    private static byte[] decodeUTF8(String text) throws IOException{           // Método que recebe uma String e converte para bytes UTF8
+       
+        return text.getBytes("UTF-8");
     }
     
     
@@ -196,11 +185,12 @@ public class Conexao implements Runnable{
      
       try {
         
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket_activo.getInputStream()));     // Cria um canal para receber dados.
-        PrintWriter out = new PrintWriter(socket_activo.getOutputStream());  // Cria um canal para enviar
+        //BufferedReader in = new BufferedReader(new InputStreamReader(socket_activo.getInputStream()));     // Cria um canal para receber dados.
+        //PrintWriter out = new PrintWriter(socket_activo.getOutputStream());  // Cria um canal para enviar
         
         InputStream inputStream = socket_activo.getInputStream();
-        CipherInputStream cis = new CipherInputStream(inputStream, cipher_s);
+        OutputStream outputStream = socket_activo.getOutputStream();
+        //CipherInputStream cis = new CipherInputStream(inputStream, cipher_s);
         
         //while((line = in.readUTF()) != null && !line.equals(".")) {
         while(!stop){
@@ -271,20 +261,25 @@ public class Conexao implements Runnable{
 
             if (recebido != null){                                              // Se recebeu informação no inputstream
                 //decrypt(recebido.getBytes());
-                System.out.println("S Mensagem que chegou ao servidor encriptada:"+ recebido);
+                //System.out.println("S Mensagem que chegou ao servidor encriptada:"+ recebido);
                 conversacao.appendMensagem("Cliente: " + recebido);
-                System.out.println("S Overall message is:" + recebido);
-                out.println("Mensagem \""+ recebido +"\" recebida");           // Envia mensagem de recebimento ao socket cliente
+                //System.out.println("S Overall message is:" + recebido);
+                byte[] mensagem = encrypt("Mensagem \""+ recebido +"\" recebida");
+                outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
+                outputStream.flush();                               // Força o envio dos bytes em buffer
+                //out.println("Mensagem \""+ recebido +"\" recebida");           // Envia mensagem de recebimento ao socket cliente
+                //out.flush();
                 recebido = null;                                               // Coloca a variavel recebido a null         
                                  }
             
             if (getMensagemServidor() != null && getMensagemServidor().length() > 0){                                // caso haja uma mensagem nova a enviar
-                    try {
-                                   
-                        out.println(getMensagemServidor());            // envia a mensagem encriptada
-                        //out.println( getMensagemServidor() );                      //Envia a string mensagem.
-                        out.flush();  
-                        conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
+                    try {                                   
+                        //out.println(getMensagemServidor());            // envia a mensagem encriptada
+                        //out.flush();  
+                        byte[] mensagem = encrypt(getMensagemServidor());    // encripta a mensagem a enviar ao servidor
+                        outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
+                        outputStream.flush();
+                        //conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
                         setMensagemServidor(null);                                  // coloca a string a null para nao repetir envio
                     }catch(Exception e){
                         System.out.println(e);
@@ -294,7 +289,8 @@ public class Conexao implements Runnable{
             
       System.out.println("S Fim de ciclo");
         }
-        
+        inputStream.close();
+        outputStream.close();
         socket_activo.close();                                                         // fecha o socket activo
       } catch (IOException ioe) {
         System.out.println("IOException on socket listen: " + ioe);
