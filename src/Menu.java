@@ -66,7 +66,7 @@ public class Menu extends JFrame{
     setVisible(true);                                                           // activa a visibilidade do JFrame
       
     
-    criarSocketServidor(4559, 4444);                                            // invoca o método que cria o Socket Server com a porta 4444 por defeito
+    criarSocketServidor(4544, 4444);                                            // invoca o método que cria o Socket Server com a porta 4444 por defeito
    /*
     // Inicialização da Thread para o Socket do servidor
     Runnable servidor = new SocketServidor(actionListener);

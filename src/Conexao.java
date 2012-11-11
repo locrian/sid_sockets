@@ -1,10 +1,7 @@
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -19,13 +16,12 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.xml.bind.DatatypeConverter;
-import sun.misc.BASE64Decoder;
 
 /*
  * To change this template, choose Tools | Templates
@@ -44,18 +40,18 @@ public class Conexao implements Runnable{
     private boolean stop = false;                                               // variavel booleana que define um criterio de paragem do ciclo while
     private volatile String mensagem;                                           // variavel que vai receber as strings de mensagem a serem enviadas do lado do servidor               
     private String client_ip;                                                   // variavel que vai guardar o endereço ip dos clientes
-    private JFrameCustom conversacao;
-    //private KeyGenerator keyGen;
+    private JFrameCustom conversacao;                                           // variavel que vai receber a instância do jPanelCustom conversacao criada no SocketServidor                
     private Cipher cipher_s;                                                    // cipher para desencriptar no servidor
     private Cipher cipher_c;                                                    // cipher para ecriptar para o cliente
-    private PrivateKey chave_privada_s;
-    private PublicKey chave_publica_s;
-    private PublicKey chave_publica_c;
-    private byte[] encrypted = null;
-    private byte[] decrypted = null;
+    private PrivateKey chave_privada_s;                                         // variavel que vai guardar a chave privada do servidor para desencriptar dados vindos dos clientes      
+    private PublicKey chave_publica_s;                                          // variavel que vai guardar a chave publica do servidor para enviar aos clientes
+    private PublicKey chave_publica_c;                                          // variavel que vai guardar a chave publica dos clientes conectados
+    private byte[] encrypted = null;                                            // Array de bytes para guardar os bytes encriptados
+    private byte[] decrypted = null;                                            // Array de bytes para guardar os bytes desencriptados
     private int first_con = 1;                                                  // variavel que se não for null envia a public key ao cliente como primeira mensagem
     private boolean first_con_envio = true;                                     // variavel que se for true envia a public key ao cliente como primeira mensagem
     private boolean first_con_recebido = true;                                  // variavel que se for true indica o recebimento da chave publica do cliente
+    private ArrayList<String> historico = new ArrayList<String>();              // ArrayList que vai guardar o historico de mensafens nesta conexao
     
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////GETS E SETS//////////////////////////////////////////
@@ -68,6 +64,13 @@ public class Conexao implements Runnable{
         return mensagem;
     }
     
+    public void getJanelaConversacao(){
+        conversacao.show();                                                     // volta a abrir a janela de conversacao
+    }
+    
+    public String getClientIp(){                                                // Método que retorna o ip do cliente ligado à onexao
+        return client_ip;
+    }
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////////Gerar as chaves publicas e privadas//////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -263,8 +266,9 @@ public class Conexao implements Runnable{
                 //decrypt(recebido.getBytes());
                 //System.out.println("S Mensagem que chegou ao servidor encriptada:"+ recebido);
                 conversacao.appendMensagem("Cliente: " + recebido);
+                historico.add("Cliente: "+ recebido);
                 //System.out.println("S Overall message is:" + recebido);
-                byte[] mensagem = encrypt("Mensagem "+ recebido +" recebida");
+                byte[] mensagem = encrypt("Mensagem \""+ recebido +"\" recebida");
                 outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
                 outputStream.flush();                               // Força o envio dos bytes em buffer
                 //out.println("Mensagem \""+ recebido +"\" recebida");           // Envia mensagem de recebimento ao socket cliente
@@ -280,6 +284,7 @@ public class Conexao implements Runnable{
                         outputStream.write(mensagem, 0, mensagem.length );  // Envia os bytes UTF8 da mensagem.
                         outputStream.flush();
                         conversacao.appendMensagem("Servidor: "+ getMensagemServidor()); // Coloca a propria mensagem na janela de conversação.
+                        historico.add("Servidor: "+ getMensagemServidor());
                         setMensagemServidor(null);                                  // coloca a string a null para nao repetir envio
                     }catch(Exception e){
                         System.out.println(e);

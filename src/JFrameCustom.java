@@ -71,6 +71,7 @@ public class JFrameCustom extends JFrame implements ActionListener{
          
    public JFrameCustom(MenuActionListener actionListener){
        this.actionListener = actionListener;
+       
    }      
          
          

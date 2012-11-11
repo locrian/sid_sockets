@@ -4,11 +4,13 @@ import java.awt.Color;
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
-public class MenuActionListener implements ActionListener{
+public class MenuActionListener implements ActionListener, MouseListener{
 
   private Menu menu;                                                          // variavel que vai receber a referência do Menu principal
   
@@ -29,7 +31,7 @@ public class MenuActionListener implements ActionListener{
   private JLabel led_cliente = new JLabel();                                    // JLabel que vai servir para identificar visualmente se a aplicação está em modo cliente
   private List clientes_conectados = new List();                                // java.awt.List para mostrar utilizadores conectados
   private JScrollPane scrollPane_c = new JScrollPane(clientes_conectados);      // JScrollPane para colocar a JTextArea clientes_conectados
-  private JLabel clientes_con = new JLabel();                                   // JLabel com legenda "Clientes conectados"
+  private JLabel clientes_con_label = new JLabel();                                   // JLabel com legenda "Clientes conectados"
   
   private JTextField tempField;                                                 // variavel que é usada na janela temporaria de configuração
   private JFrameCustom tempFrame;                                               // variavel que é usada na janela temporaria de configuração
@@ -116,10 +118,11 @@ public class MenuActionListener implements ActionListener{
     //configuração da List clientes_conectados
     scrollPane_c.setBounds(420, 60, 150, 180);                                  // configura a posição e tamanho da JTextArea
     scrollPane_c.setBorder(border);                                             // define o contorno da JTextArea
+    clientes_conectados.addMouseListener(this);
     
     //configuração da JLabel clientes_con
-    clientes_con.setText("Clientes conectados:");                               // coloca a legenda na JLabel juntamente com o porto
-    clientes_con.setBounds(420, 40, 150, 15);                                  // tamanho e localização da JLabel
+    clientes_con_label.setText("Clientes conectados:");                               // coloca a legenda na JLabel juntamente com o porto
+    clientes_con_label.setBounds(420, 40, 150, 15);                                   // tamanho e localização da JLabel
     
     //configuração da JLabel aEnviar
     aEnviar.setText("Texto a enviar para:");                                    // coloca a legenda na JLabel aEnviar
@@ -170,7 +173,7 @@ public class MenuActionListener implements ActionListener{
     painel.add(porto_label_s);                                                  // adiciona a JLabel porto ao JPanel
     painel.add(scrollPane);                                                     // adiciona a JScrollPane com a JTextArea info ao JPanel
     painel.add(scrollPane_c);                                                   // adiciona a JScrollPane com a JTextArea clientes_conectados ao JPanel
-    painel.add(clientes_con);                                                   // adiciona a JLabel clientes_con ao JPanel
+    painel.add(clientes_con_label);                                                   // adiciona a JLabel clientes_con ao JPanel
     painel.add(aEnviar);                                                        // adiciona a Jlabel aEnviar ao JPanel
     painel.add(nome_servidor);                                                  // adiciona o JTextField ao JPanel
     painel.add(porto_label_c);                                                  // adiciona a JTextLabel porto_label_c ao JPanel
@@ -189,15 +192,11 @@ public class MenuActionListener implements ActionListener{
 
   
   
-  
+  @Override
   public void actionPerformed(ActionEvent e) {                                  // Activado sempre que haja um click ou enter
       
      //System.out.println(e.getActionCommand());                                // Instrução de debug
-      
-      
-      
-      
-      
+
      if("botao_enviar".equals(e.getActionCommand())){                           // verifica se essa ativação é causada pelo botao enviar
        
        ///////////Quando cliente////////////////////////////////////////////////  
@@ -256,11 +255,39 @@ public class MenuActionListener implements ActionListener{
          tempFrame.constroiFrame();
          tempFrame.show();
                                             }
+       
+    }
+      @Override
+      public void mouseExited(MouseEvent me){
+          
+      }
+      
+      @Override
+      public void mouseEntered(MouseEvent me){
+          
+      }
+      
+      @Override
+      public void mouseReleased(MouseEvent me){
+          
+      }
+      
+      @Override
+      public void mousePressed(MouseEvent me){
+          
+      }
+      
+      @Override
+      public void mouseClicked(MouseEvent me){                                  // Caso haja um evento de botão pressionado na List
+          if (me.getClickCount() == 2 && !me.isConsumed()) {                    // Valida apenas se for duplo click
+              me.consume();
+              socket_s.showJanelaConversacao(clientes_conectados.getSelectedItem());    // Envia o ip selecionado na List e envia para o método "showJanelaConversacao"
+          }
+         
+      }
       
       
       
-                                            }
-    
         
   }
 

@@ -23,8 +23,9 @@ public class SocketServidor implements Runnable{
     private DataInputStream in_s;                                               // reserva endereço de memória para canal de receber dados       
     private DataOutputStream out_s;                                             // reserva endereço de memória para canal de enviar dados 
     private boolean is_servidor = false;                                        // variavel boooleana que guarda informação sobre o papel da aplicação (servidor ou cliente)
-    //private ArrayList<Conexao> vetor_conexoes= new ArrayList<Conexao>();        // cria um ArrayList com informação de todas as conexões que vao sendo criadas
+    private ArrayList<Conexao> vetor_conexoes= new ArrayList<Conexao>();        // cria um ArrayList com informação de todas as conexões que vao sendo criadas
     private JFrameCustom conversacao;
+    
     
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////Gets e Sets/////////////////////////////////////////
@@ -40,9 +41,17 @@ public class SocketServidor implements Runnable{
         return is_servidor;
     } 
     
-   /* public ArrayList<Conexao> getVetorConexoes(){                               // Retorna o vetor de conexoes
+    public ArrayList<Conexao> getVetorConexoes(){                               // Retorna o vetor de conexoes
         return vetor_conexoes;
-    } */
+    } 
+    
+    public void showJanelaConversacao(String ip){                               // Metodo para fazer request da janela de conversação entre o servidor e um determinado cliente
+        for (int i = 0; i  < vetor_conexoes.size(); i++ ){                      // Percorre o array de conexoes
+           if (vetor_conexoes.get(i).getClientIp().compareTo(ip) == 0)          // Se encontrar a conexao com o ip do cliente selecionado
+               vetor_conexoes.get(i).getJanelaConversacao();                    // invoca o método da classe Conexao "getJanelaConversacao"
+        }
+        
+    }
     
     ////////////////////////////////////////////////////////////////////////////
     public SocketServidor(MenuActionListener actionListener, int porto){        // Construtor com parametros para receber a referencia do objeto MenuActionListener e porto
@@ -95,13 +104,13 @@ public class SocketServidor implements Runnable{
            
            
            
-      Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString().replace("/", ""), conversacao);// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente e da janela de conversação
+         Conexao con_c= new Conexao(socket, actionListener, socket.getInetAddress().toString().replace("/", ""), conversacao);// Cria uma instancia do objecto "conexao" que recebe a referência do socket activo, do MenuActionListener, e informação do ip do cliente e da janela de conversação
          Thread trd = new Thread(con_c);                                        // cria uma nova Thread para a instancia de conexao
          trd.start();                                                           // inicia a thread
-         //vetor_conexoes.add(con_c);                                           // Adiciona a conexao ao arrayListe de conexoes  
+         vetor_conexoes.add(con_c);                                             // Adiciona a conexao ao arrayListe de conexoes  
          actionListener.setConexaoAtiva();                                      // Invoca o método setConexaoActiva do menuActionListener
          conversacao.setConexao(con_c);                                         // Envia a referência da conexao para instancia de JFrameCustom conversacao
-      
+         
          
       socket_servidor.close();                                                  // termina o servidor de escuta
          
