@@ -2,6 +2,7 @@
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -111,25 +112,43 @@ public class JFrameCustom extends JFrame implements ActionListener{
             
          }
          else if (titulo.compareTo("Ajuda") == 0){
-                JTextArea tempTextArea = new JTextArea("\nSocket Servidor: É activado na inicialização do programa.\n\nSocket Cliente: É activado quando se "
+                JTextArea tempTextArea = new JTextArea("\nSocket Servidor: É activado na inicialização do programa.\n\nSocket Cliente: É activado quando "
                                                         + "é pressionado o botão enviar, com os dados na janela \"texto a enviar para, \" \"Porto:\" "
                                                         + "e com o texto contido na janela de mensagem.\n\nPode mudar o porto de escuta do servidor, acedendo"
                                                         + " ao  menu configurações e selecionando a opção Porto. Tera de inserir um numero entre 1024 e 65535."
-                                                        + "\n\nNa janela \"Texto a enviar para\" pode selecionar o Host de destino tanto pelo Host-name como pelo endereço IP."
-                                                        + "\n\nPara sair do programa, aceda ao menu Ficheiro e selecione \"Sair\"");
+                                                        + "\n\nNa janela \"Texto a enviar para\" pode selecionar o Host de destino tanto pelo Hostname como pelo endereço IP."
+                                                        + "\n\nPara sair do programa, aceda ao menu Ficheiro e selecione \"Sair\""
+                                                        + "\n\nA segurança das comunicações está assegurada através da criação de chaves publicas e privadas "
+                                                        + "tanto no servidor como no cliente.\nExemplo: o programa cliente recebe a chave publica do servidor,"
+                                                        + " com a qaul encripta os dados a enviar. O servidor desencripta a mensagem com a sua chave privada.\n"
+                                                        + "Uma vez que só as chaves públicas são transmitidas os níveis de segurança são altos.\n\nQualquer um pode "
+                                                        + "interceptar a chave publica e enviar mensagens, mas não pode decifrar mensagens interceptadas porque nao "
+                                                        + "tem acesso ás chaves privadas.");
                 tempTextArea.setLineWrap(true);
                 tempTextArea.setWrapStyleWord(true);
                 tempTextArea.setEditable(false);
-                tempTextArea.setBounds(0,0,400,400);
+                tempTextArea.setBounds(0,0,x,y);
             
                 tempPanel.add(tempTextArea);
                                                 }
 
             
             
-         else if (titulo.compareTo("Sobre") == 0){
-                 JLabel tempLabel = new JLabel("lololol.");
-                 tempLabel.setBounds(20,10,50,200);
+         else if (titulo.compareTo("Este trabalho") == 0){
+                 java.net.URL img = this.getClass().getResource("logo_ispgaya.png");            //Adiciona uma imagem à janela principal
+                 ImageIcon ispgaya = new ImageIcon(img);
+                 JLabel imagem = new JLabel(ispgaya);
+                 imagem.setBounds(0, 0, 400, 173);
+                 JTextArea tempTextArea = new JTextArea("\nEste trabalho foi desenvolvido no ambito da unidade curricular de Sistemas Distribuídos pertencente "
+                                                        + "ao 1º Semestre do 3º Ano da Licenciatura em Engenharia Informática do Instituto Superior Politécnico Gaya "
+                                                        + "\n\nAutor: Ricardo Taboada\nNº: 2930\nDocente responsável: Engº Jorge Simões");
+                 tempTextArea.setLineWrap(true);
+                 tempTextArea.setWrapStyleWord(true);
+                 tempTextArea.setEditable(false);
+                 tempTextArea.setBackground(new Color(238,238,238));
+                 tempTextArea.setBounds(0,173,x,y-173);
+                 tempPanel.add(imagem);
+                 tempPanel.add(tempTextArea);
                                                 }
             
          
@@ -148,7 +167,7 @@ public class JFrameCustom extends JFrame implements ActionListener{
                 mensagem.setWrapStyleWord(true);                                            // configura a JTextArea para fazer wrap ao texto se este for demasiado longo
                 
                 
-            JButton botao = new JButton("Enviar");
+                JButton botao = new JButton("Enviar");
                 botao.setBounds(310, 270, 80, 100);
                 botao.addActionListener(this);
                 botao.setActionCommand("botao_enviar_s");

@@ -274,11 +274,19 @@ public class MenuActionListener implements ActionListener, MouseListener{
                                                  }
       if("Instruções".equals(e.getActionCommand())){                            // caso tenha sido pressionado o botão de menu Ajuda
          tempFrame = new JFrameCustom(this); 
-         tempFrame.setTamanho(400, 400);
+         tempFrame.setTamanho(400, 500);
          tempFrame.setTitulo("Ajuda");
          tempFrame.constroiFrame();
          tempFrame.show();
-                                            }
+      }
+      
+      if("Este trabalho".equals(e.getActionCommand())){
+          tempFrame = new JFrameCustom(this);
+          tempFrame.setTamanho(400, 400);
+          tempFrame.setTitulo("Este trabalho");
+          tempFrame.constroiFrame();
+          tempFrame.show();
+      }
        
     }
       @Override

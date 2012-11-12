@@ -54,8 +54,11 @@ public class MenuBar extends JMenuBar {
     
     ////////////////////////////////////////////////////////////////////////////
     JMenu menuSobre = new JMenu("Sobre");
-    menuSobre.addActionListener(menuActionListener);
-    menuSobre.setActionCommand("Sobre");
+    
+    JMenuItem itemEsteTrabalho = new JMenuItem("Este trabalho");
+    itemEsteTrabalho.addActionListener(menuActionListener);
+    itemEsteTrabalho.setActionCommand("Este trabalho");
+    menuSobre.add(itemEsteTrabalho);
     
     add(menuSobre);
   }
