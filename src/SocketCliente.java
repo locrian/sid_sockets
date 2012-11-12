@@ -243,8 +243,10 @@ public class SocketCliente implements Runnable{
 
         }catch(UnknownHostException e){
             actionListener.appendInfo("Host Desconhecido");
+            actionListener.setSocketClienteError("Host Desconhecido");
         }catch(IOException e){
             actionListener.appendInfo("Host selecionado não está disponível");
+            actionListener.setSocketClienteError("Host não disponivel");
         }catch(IllegalArgumentException Ia){
             actionListener.appendInfo("Porto mal inserido");
         }
