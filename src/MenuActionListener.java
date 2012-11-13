@@ -39,7 +39,7 @@ public class MenuActionListener implements ActionListener, MouseListener{
   private SocketCliente socket_c;
   private SocketServidor socket_s;
   private int same_machine = 1;                                                 // variavel que define se o cliente e servidor estão na mesma máquina
-  private String socket_c_erro;
+  private String socket_c_erro= "";
   
   //////////////////////////////////////////////////////////////////////////////
   /////////////////////GETS E SETS /////////////////////////////////////////////

@@ -193,7 +193,7 @@ public class SocketCliente implements Runnable{
                     
                 if (recebido != null){                                          // Se recebeu informação no imputstream
                     System.out.println("C Mensagem que chegou ao cliente:"+ recebido); //debug
-                    actionListener.appendInfo("C Servidor: " + recebido);       // envia a informação para a JTextAreaInfo
+                    actionListener.appendInfo("Servidor: " + recebido);       // envia a informação para a JTextAreaInfo
                     recebido = null;                                            // Coloca a mensagem a null para nao voltar a repetir
                 }
   
