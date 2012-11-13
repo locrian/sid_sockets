@@ -233,29 +233,13 @@ public class Conexao implements Runnable{
                          System.out.println(e);
                         }
             try{
-              /*  int tamanho = cipher_s.getBlockSize();
-                System.out.println("1");
-                byte[] temp = new byte[1024];
-                System.out.println("2");
-                int bytesLidos;
-                while((bytesLidos = cis.read(temp)) != -1 ){
-                    System.out.println(temp+" "+" "+0+" "+" "+bytesLi4444dos);
-                }
-                System.out.println("3");
-                recebido = temp.toString();
-                System.out.println("4");
-                System.out.println(recebido); */
+              
                 byte[] tmp = new byte[128];
                 inputStream.read(tmp);
                 System.out.println("S mensagem do cliente encriptada"+tmp);
                 recebido = decrypt(tmp);
                 System.out.println("S mensagem do cliente desencriptada "+ recebido);
-                //recebido = in.readLine();                                        // a variavel "recebido", recebe informação do input buffer
-                //System.out.println(recebido);
-                //System.out.println("S mensagem do cliente encriptada"+recebido);                
-                //decrypt(recebido.getBytes());
-                //String verifica = decrypt(recebido.getBytes());
-                //System.out.println("S Mensagem do cliente desencriptada "+ verifica);
+                
             }catch(SocketTimeoutException sto){
                 System.out.println("S Timeout do inputstream do servidor");
             }

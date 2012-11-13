@@ -39,16 +39,16 @@ public class SocketCliente implements Runnable{
     private volatile String mensagem;                                           // variavel que vai receber a mensagem escrita pelo cliente
     private boolean stop = false;                                               // variavel booleana que define se o ciclo de escuta escrita se mantem em execução
     private String recebido;                                                    // variavel que armazena o conteudo do inputstream
-    private PrivateKey chave_privada_c;
+    private PrivateKey chave_privada_c;                                         // variavel que vai guardar a chave privada da instancia desta classe
     private Cipher cipher_s;                                                    // cipher para desencriptar no servidor
     private Cipher cipher_c;                                                    // cipher para ecriptar para o cliente
-    private PublicKey chave_publica_c;
-    private PublicKey chave_publica_s;
-    private byte[] encrypted = null;
-    private byte[] decrypted = null;
+    private PublicKey chave_publica_c;                                          // variavel que vai guardar a chave publica da instância desta classe
+    private PublicKey chave_publica_s;                                          // variavel que vai guardar a chave publica enviada pelo servidor
+    private byte[] encrypted = null;                                            // array de bytes que vai guardar os dados encriptados
+    private byte[] decrypted = null;                                            // array de bytes que vai guardar os dados desencriptados
     private boolean first_con_envio = true;                                     // variavel que se for true envia a public key ao servidor como primeira mensagem
     private boolean first_con_recebido = true;                                  // variavel que se for true indica o recebimento da chave publica do servidor
-    private CipherOutputStream cos;
+    
     ////////////////////////////////////////////////////////////////////////////
     /////////////////////////Gets e Sets////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -184,7 +184,7 @@ public class SocketCliente implements Runnable{
                 try{                                                            // uma vez que especificamos um timeout para o inputstream necessitamos do try/catch
                     byte[] tmp = new byte[128];
                     inputStream.read(tmp);
-                    System.out.println("S mensagem do cliente encriptada"+tmp);
+                    System.out.println("S mensagem do cliente encriptada"+ new String(tmp));
                     recebido = decrypt(tmp);
                     System.out.println("S mensagem do cliente desencriptada "+ recebido);
                 }catch(SocketTimeoutException sto){
@@ -194,31 +194,32 @@ public class SocketCliente implements Runnable{
                     
                 if (recebido != null){                                          // Se recebeu informação no imputstream
                     System.out.println("C Mensagem que chegou ao cliente:"+ recebido); //debug
-                    actionListener.appendInfo("Servidor: " + recebido);       // envia a informação para a JTextAreaInfo
+                    actionListener.appendInfo("Servidor: " + recebido);         // envia a informação para a JTextAreaInfo
                     recebido = null;                                            // Coloca a mensagem a null para nao voltar a repetir
                 }
   
                 if (first_con_envio){                                           // caso seja o primeiro contacto com o servidor
                     try{  
-                        System.out.println("C chave_publica: "+DatatypeConverter.printHexBinary(chave_publica_c.getEncoded()));
-                        ByteBuffer bb = ByteBuffer.allocate(4);
-                        bb.putInt(chave_publica_c.getEncoded().length);
-                        socket_client.getOutputStream().write(bb.array());
-                        socket_client.getOutputStream().write(chave_publica_c.getEncoded());
-                        socket_client.getOutputStream().flush();
+                        //////PARA ENVIAR E RECECER CHAVES PUBLICAS/////////////
+                        System.out.println("C chave_publica: "+DatatypeConverter.printHexBinary(chave_publica_c.getEncoded())); //debug
+                        ByteBuffer bb = ByteBuffer.allocate(4);                 // aloca um ByteBuffer de tamanho 4 á variavel bb          
+                        bb.putInt(chave_publica_c.getEncoded().length);         // coloca no buffer o tamanho da chave_publica_c
+                        socket_client.getOutputStream().write(bb.array());      // envia o byte array bb
+                        socket_client.getOutputStream().write(chave_publica_c.getEncoded());  // envia a chave publica codificada
+                        socket_client.getOutputStream().flush();                // força o envio dos dados no outputstream
                         
                         byte[] temp_chave_s = new byte[4];                      // cria um novo array de bytes com tamanho 4
-                        socket_client.getInputStream().read(temp_chave_s,0,4);  // 
-                        ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);        // cria um buffer de bytes com tamanho baseado no byte temp_chave_c
+                        socket_client.getInputStream().read(temp_chave_s,0,4);  // lê do input stream para o byte temp_chave_se 
+                        ByteBuffer bb_s = ByteBuffer.wrap(temp_chave_s);        // cria um buffer de bytes com tamanho baseado no byte temp_chave_s
                         int tamanho = bb_s.getInt();                            // guarda o tamanho do bytebuffer
                         System.out.println(tamanho);                            // debug
                         byte[] temp_chave_s_bytes = new byte[tamanho];          // cria um novo array de bytes com o tamanho do bytebuffer 
-                        socket_client.getInputStream().read(temp_chave_s_bytes);//
-                        System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));         //debug
-                        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    //
-                        KeyFactory keyFactory = KeyFactory.getInstance("RSA"); 
-                        chave_publica_s = keyFactory.generatePublic(keySpec);   // 
-                        System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded()));
+                        socket_client.getInputStream().read(temp_chave_s_bytes);// recebe no inputStream para o array de bytes temp_cave_s_bytes
+                        System.out.println(DatatypeConverter.printHexBinary(temp_chave_s_bytes));   // debug
+                        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(temp_chave_s_bytes);    // codifica a chave recebida
+                        KeyFactory keyFactory = KeyFactory.getInstance("RSA");  // cria um novo keyFactory baseado no algoritmo RSA
+                        chave_publica_s = keyFactory.generatePublic(keySpec);   // gera a chave publica através da chave codificada keySpec que foi recebida pelo servidor
+                        System.out.println(DatatypeConverter.printHexBinary(chave_publica_s.getEncoded())); //debug
                         first_con_envio = false;                                // coloca a variavel first_con_envio em false
                     
                     }catch(NoSuchAlgorithmException e){
@@ -243,13 +244,13 @@ public class SocketCliente implements Runnable{
             socket_client.close();                                              // Fecha o socket.
 
         }catch(UnknownHostException e){
-            actionListener.appendInfo("Host Desconhecido");
-            actionListener.setSocketClienteError("Host Desconhecido");
+            actionListener.appendInfo("Host Desconhecido");                     // caso haja exceção coloca informação na janela info
+            actionListener.setSocketClienteError("Host Desconhecido");          // invoca o método setSocketClienteError do menuActionLister
         }catch(IOException e){
-            actionListener.appendInfo("Host selecionado não está disponível");
-            actionListener.setSocketClienteError("Host não disponivel");
+            actionListener.appendInfo("Host selecionado não está disponível");  // caso haja exceção coloca informação na janela info
+            actionListener.setSocketClienteError("Host não disponivel");        // invoca o método setSocketClienteError do menuActionLister
         }catch(IllegalArgumentException Ia){
-            actionListener.appendInfo("Porto mal inserido");
+            actionListener.appendInfo("Porto mal inserido");                    // caso haja exceção coloca informação na janela info
         }
      
     }
