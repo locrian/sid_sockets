@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 /*
@@ -20,6 +21,7 @@ public class SocketServidor implements Runnable{
     private MenuActionListener actionListener = new MenuActionListener();       // variavel que vai receber a referencia do MenuActionListener
     private int porto;                                                          // variavel que recebe informação do porto de escuta a usar                                   
     private volatile boolean stop = false;                                      // variavel que vai guardar um valor boleano que vai controlar o termino da Thread do socket
+    private ServerSocket socket_servidor;
     private DataInputStream in_s;                                               // reserva endereço de memória para canal de receber dados       
     private DataOutputStream out_s;                                             // reserva endereço de memória para canal de enviar dados 
     private boolean is_servidor = false;                                        // variavel boooleana que guarda informação sobre o papel da aplicação (servidor ou cliente)
@@ -40,6 +42,14 @@ public class SocketServidor implements Runnable{
     public boolean getIsServidor(){                                             // Retorna a variavel booleana "is_servidor"
         return is_servidor;
     } 
+    
+    public void closeServerSocket(){                                            // Metodo que força o fecho do socket de escuta
+        try{
+            socket_servidor.close();
+        }catch(IOException e){
+            System.out.println(e);
+        }
+    }
     
     public ArrayList<Conexao> getVetorConexoes(){                               // Retorna o vetor de conexoes
         return vetor_conexoes;
@@ -66,8 +76,7 @@ public class SocketServidor implements Runnable{
     while(!stop){                                                               // corre enquanto a ordem de paragem nao for dada, de modo a ficar á escuta de vários clientes
       try{
           
-         
-            ServerSocket socket_servidor = new ServerSocket(porto);              // cria um novo server socket com a porta 4444 
+          socket_servidor = new ServerSocket(porto);                            // cria um novo server socket com a porta 4444 
          
       
       /////////////////Ciclo de espera//////////////////////////////////////////
@@ -113,11 +122,22 @@ public class SocketServidor implements Runnable{
          
          
       socket_servidor.close();                                                  // termina o servidor de escuta
-         
+      
+      }catch(SocketException se){
+          System.out.println("Socket Excepion "+ se);
+          ////////////////Ciclo de espera para dar tempo ao Menu ///////////////
+          //////////////////para mudar o porto do servidor//////////////////////
+          long t0, t1;                                                          // variaveis temporais para controlar uma espera
+          t0 =  System.currentTimeMillis();                                     // variavel que guarda o momento actual em ml para usar no ciclo "do" de espera
+                                                                                
+          do{
+              t1 = System.currentTimeMillis();
+          }while((t1-t0) < (500));
+          ////////////////////////////////////////////////////////////////////////// 
       }catch(IOException e){                                                
-          System.out.println("IO error Server"+ e);
-           e.printStackTrace();
-                           }
+          System.out.println("IO error Server "+ e);
+          e.printStackTrace();
+      }
       
       }
     }

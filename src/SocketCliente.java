@@ -175,7 +175,8 @@ public class SocketCliente implements Runnable{
         try{
             Socket socket_client = new Socket(endereco, porto);                 // Criar um novo Socket 
             socket_client.setSoTimeout(1000);                                   // Especifica um timeout para o inputstream, para nao ficar bloquado a espera de dados
-
+            actionListener.setSocketClienteError("Conectado");                  // Envia um texto qualquer para a variavel socket_c_erro do MenuActionListener para este não ficar em null
+            
             InputStream inputStream = socket_client.getInputStream();           // cria um canal de recebimento de dados
             OutputStream outputStream = socket_client.getOutputStream();        // cria um canal de envio de dados
      

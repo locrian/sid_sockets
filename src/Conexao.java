@@ -143,6 +143,9 @@ public class Conexao implements Runnable{
         System.out.println(e);
     }catch(BadPaddingException e){
         System.out.println(e);
+        actionListener.appendInfo("Cliente "+client_ip+" terminou a sessão");   // envia informação para a janela info
+        actionListener.removeClientesFromList(client_ip);                       // retira o ip do cliente da lista de clientes conectados
+        stop = true;                                                            // termina o ciclo de escuta de ccomunicações
     //}catch(UnsupportedEncodingException e){
           System.out.println(e); 
       }    

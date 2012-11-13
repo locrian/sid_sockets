@@ -39,7 +39,7 @@ public class MenuActionListener implements ActionListener, MouseListener{
   private SocketCliente socket_c;
   private SocketServidor socket_s;
   private int same_machine = 1;                                                 // variavel que define se o cliente e servidor estão na mesma máquina
-  private String socket_c_erro= "";
+  private String socket_c_erro= null;
   
   //////////////////////////////////////////////////////////////////////////////
   /////////////////////GETS E SETS /////////////////////////////////////////////
@@ -207,25 +207,34 @@ public class MenuActionListener implements ActionListener, MouseListener{
        ///////////Quando cliente////////////////////////////////////////////////  
          
        if (contador == 0 /*&& socket_s.getIsServidor() == false*/){
-           led_cliente.setBackground(Color.green);                              // Activia o led indicativo como cliente
+          
            try{
                socket_c = menu.criarSocketCliente(nome_servidor.getText(), Integer.parseInt(porto_servidor.getText()), mensagem.getText()); // se sim cria um novo socket cliente 
                mensagem.setText("");                                            // limpa o texto para se poder escrever o proximo texto
-               //////Ciclo de espera para dar tempo para que a variavek/////////
+               //////Ciclo de espera para dar tempo para que a variavel/////////
                //////socket_c_erro possa ser actualizada caso haja um erro//////
-               //////na criação do SocketCliente////////////////////////////////
+            /*   //////na criação do SocketCliente////////////////////////////////
                long t0, t1;                                                     // variaveis temporais para controlar uma espera
                t0 =  System.currentTimeMillis();                                // variavel que guarda o momemnto actual em ml para usar no ciclo "do" de espera
                                                                                 
                do{
                    t1 = System.currentTimeMillis();
-               }while((t1-t0) < (500));
-               /////////////////////////////////////////////////////////////////
-               
+               }while((t1-t0) < (1000));
+               ///////////////////////////////////////////////////////////////// */
+            
+             while(socket_c_erro == null){                                      // Enquanto for null fica a espera de um update, este update é feito pela classe SocketCliente
+                                                        
+                 System.out.println("");
+             }                                                                  
+            
                if(socket_c_erro.compareTo("Host Desconhecido") != 0 &&
-               socket_c_erro.compareTo("Host não disponivel") != 0)             // Se nao contiver a mensagem de erro
+               socket_c_erro.compareTo("Host não disponivel") != 0){            // Se nao contiver a mensagem de erro
                    contador++;                                                  // incrementa o contador par nao voltar a criar um socket para o mesmo cliente
-               socket_c_erro = "";                                              // coloca a variavel em branco senao se na primeira vez contiver Host Desconhecido, vai estar sempre a falhar no if de controlo acima         
+                   led_cliente.setBackground(Color.green);                      // Activia o led indicativo como cliente
+                   System.out.println("Entrou no incremento de cliente");
+                   System.out.println(socket_c_erro);
+               }
+                        
            }catch(NumberFormatException nfe){
                info.append("Porto especificado invalido.\n");
            }
@@ -235,16 +244,7 @@ public class MenuActionListener implements ActionListener, MouseListener{
          socket_c.setMensagemCliente(mensagem.getText());
          mensagem.setText("");
            }
-       
-       
-       ///////////////////Quando Servidor///////////////////////////////////////
-      /* 
-       if (socket_s.getIsServidor() == true){
-           con.setMensagemServidor(mensagem.getText());
-           mensagem.setText("");
-                                            }
-     */
-     
+
                                                             }
      
            

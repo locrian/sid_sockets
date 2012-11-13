@@ -20,9 +20,11 @@ public class Menu extends JFrame{
     actionListener.setPortoLabel("A receber no porto: " + portoNovo);           // envia para o MenuActionListener a informação sobre o porto de escuta
    
     try{
-    if (trd_s.isAlive()){                                                       
+    if (trd_s.isAlive()){
+       servidor.closeServerSocket();                                            // Invoca o metodo de forçar o fecho do socket de escuta da classe SocketServidor
+       actionListener.appendInfo("A fechar socket de escuta...");
        servidor.stopThread();                                                   // caso já exista uma thread a correr, destroi para criar uma nova  
-       criarSocketCliente("127.0.0.1", portoAntigo , "");                       // envia uma mensagem em branco para desblockear o "socket_servidor.accept();" e continuar com o fecho da thread
+       //criarSocketCliente("127.0.0.1", portoAntigo , "");                       // envia uma mensagem em branco para desblockear o "socket_servidor.accept();" e continuar com o fecho da thread
        actionListener.appendInfo("A parar threads activas...");
                          }
     }catch(NullPointerException Npe){
@@ -66,7 +68,7 @@ public class Menu extends JFrame{
     setVisible(true);                                                           // activa a visibilidade do JFrame
       
     
-    criarSocketServidor(4558, 4444);                                            // invoca o método que cria o Socket Server com a porta 4444 por defeito
+    criarSocketServidor(4444, 4444);                                            // invoca o método que cria o Socket Server com a porta 4444 por defeito
    /*
     // Inicialização da Thread para o Socket do servidor
     Runnable servidor = new SocketServidor(actionListener);
