@@ -128,6 +128,7 @@ public class SocketCliente implements Runnable{
             System.out.println(e);
         }catch(BadPaddingException e){
             System.out.println(e);
+            stop = true;                                                        // Para o ciclo de escuta
         }    
       
         return output;
